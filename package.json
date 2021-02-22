@@ -1,0 +1,22 @@
+{
+  "name": "gbp",
+  "version": "1.0.0",
+  "description": "Reward or take away points to contributors based on PR labels.",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tgstation/actions/gbp"
+  },
+  "keywords": [
+    "actions"
+  ],
+  "author": "Mothblocks",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/github": "^4.0.0"
+  }
+}
