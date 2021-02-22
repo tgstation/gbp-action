@@ -1,8 +1,7 @@
 name: GBP
 on:
-  push:
-    branches:
-    - master
+  pull_request:
+    types: [closed]
 jobs:
   gbp:
     runs-on: ubuntu-latest
