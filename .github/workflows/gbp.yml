@@ -1,0 +1,13 @@
+name: GBP
+on:
+  push:
+    branches:
+    - master
+jobs:
+  gbp:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: GBP action
+      uses: ./
