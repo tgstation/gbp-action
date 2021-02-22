@@ -1,0 +1,5 @@
+name: 'GBP'
+description: 'Reward or take away points to contributors based on PR labels.'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
