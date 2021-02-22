@@ -5429,7 +5429,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const github = __importStar(__nccwpck_require__(873));
 async function run() {
-    console.log(JSON.stringify(github.context.payload));
+    console.log(JSON.stringify(github.context.issue));
 }
 run();
 
