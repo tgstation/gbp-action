@@ -13244,16 +13244,20 @@ function run() {
         const labels = pullRequest.labels;
         const labelNames = labels.map((label) => label.name);
         const user = pullRequest.user;
-        if (configuration.reset_label !== undefined &&
-            labelNames.indexOf(configuration.reset_label) !== -1) {
-            return Promise.reject("NYI: GBP: Reset");
-        }
         const balanceSheet = yield points.readBalanceFile();
         const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
-        const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
-        const balance = oldBalance + pointsReceived;
-        if (pointsReceived === 0) {
-            return;
+        let balance;
+        let pointsReceived = 0;
+        if (configuration.reset_label !== undefined &&
+            labelNames.indexOf(configuration.reset_label) !== -1) {
+            balance = 0;
+        }
+        else {
+            const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
+            balance = oldBalance + pointsReceived;
+            if (pointsReceived === 0) {
+                return;
+            }
         }
         const newOutput = points.setBalance(balanceSheet, user, balance);
         try {
