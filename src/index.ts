@@ -80,5 +80,5 @@ async function run() {
 }
 
 run().catch((problem) => {
-    core.error(problem.toString())
+    core.setFailed(problem.toString())
 })
