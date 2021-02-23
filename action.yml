@@ -1,5 +1,9 @@
 name: 'GBP'
 description: 'Reward or take away points to contributors based on PR labels.'
+inputs:
+  token:
+    description: 'Token to authorize commits and comments under'
+    required: true
 runs:
   using: 'node12'
   main: 'dist/index.js'

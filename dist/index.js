@@ -13136,6 +13136,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.readConfiguration = exports.parseConfig = void 0;
 const fs_1 = __nccwpck_require__(5747);
@@ -13155,21 +13164,20 @@ function parseConfig(configurationText) {
     const valueEither = configurationSchema.decode(toml.parse(configurationText));
     if (Either_1.isRight(valueEither)) {
         const value = valueEither.right;
-        return {
-            ...value,
-            points: new Map(Object.entries(value.points)),
-        };
+        return Object.assign(Object.assign({}, value), { points: new Map(Object.entries(value.points)) });
     }
     else {
         throw valueEither.left;
     }
 }
 exports.parseConfig = parseConfig;
-async function readConfiguration() {
-    const configFile = await fs_1.promises.readFile("./.github/gbp.toml", {
-        encoding: "utf-8",
+function readConfiguration() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const configFile = yield fs_1.promises.readFile("./.github/gbp.toml", {
+            encoding: "utf-8",
+        });
+        return parseConfig(configFile);
     });
-    return parseConfig(configFile);
 }
 exports.readConfiguration = readConfiguration;
 
@@ -13200,6 +13208,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
@@ -13209,64 +13226,67 @@ const COMMITTER = {
     name: "tgstation-server",
     email: "tgstation-server@tgstation13.org",
 };
-async function run() {
-    const configuration = await configuration_1.readConfiguration().catch((reason) => {
-        core.setFailed(`Couldn't read configuration file.\n${reason}`);
-        process.exit(1);
-    });
-    const pullRequest = github.context.payload.pull_request;
-    if (pullRequest === undefined) {
-        core.setFailed(`No pull request was provided.`);
-        process.exit(1);
-    }
-    if (!pullRequest.merged) {
-        core.info("Pull request was closed, not merged.");
-        return;
-    }
-    const labels = pullRequest.labels;
-    const labelNames = labels.map((label) => label.name);
-    const user = pullRequest.user;
-    if (configuration.reset_label !== undefined &&
-        labelNames.indexOf(configuration.reset_label) !== -1) {
-        core.setFailed("NYI: GBP: Reset");
-        process.exit(1);
-    }
-    const balanceSheet = await points.readBalanceFile();
-    const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
-    const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
-    const balance = oldBalance + pointsReceived;
-    const newOutput = points.setBalance(balanceSheet, user, balance);
-    const octokit = github.getOctokit(core.getInput("token"));
-    await octokit.repos.createOrUpdateFileContents({
-        owner: github.context.payload.repository?.owner?.login,
-        repo: github.context.payload.repository?.name,
-        path: ".github/gbp-balances.toml",
-        message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-        content: newOutput,
-        committer: COMMITTER,
-    });
-    // Only send comment after its ensured the GBP is saved
-    // TODO: Don't send for maintainers (commit access)
-    let comment;
-    if (balance > 0 && oldBalance < 0) {
-        comment =
-            `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
-                "Feel free to make Feature/Balance PRs.";
-    }
-    else if (balance < 0 && pointsReceived < 0) {
-        comment =
-            `Your Fix/Feature pull request is currently below zero (${balance}). ` +
-                "Maintainers may close future Feature/Balance PRs. " +
-                "Fixing issues or helping to improve the codebase will raise this score.";
-    }
-    if (comment !== undefined) {
-        await octokit.issues.createComment({
-            owner: github.context.payload.repository?.owner?.login,
-            repo: github.context.payload.repository?.name,
-            issue_number: pullRequest.number,
-            body: comment,
+function run() {
+    var _a, _b, _c, _d, _e, _f;
+    return __awaiter(this, void 0, void 0, function* () {
+        const configuration = yield configuration_1.readConfiguration().catch((reason) => {
+            core.setFailed(`Couldn't read configuration file.\n${reason}`);
+            process.exit(1);
         });
-    }
+        const pullRequest = github.context.payload.pull_request;
+        if (pullRequest === undefined) {
+            core.setFailed(`No pull request was provided.`);
+            process.exit(1);
+        }
+        if (!pullRequest.merged) {
+            core.info("Pull request was closed, not merged.");
+            return;
+        }
+        const labels = pullRequest.labels;
+        const labelNames = labels.map((label) => label.name);
+        const user = pullRequest.user;
+        if (configuration.reset_label !== undefined &&
+            labelNames.indexOf(configuration.reset_label) !== -1) {
+            core.setFailed("NYI: GBP: Reset");
+            process.exit(1);
+        }
+        const balanceSheet = yield points.readBalanceFile();
+        const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
+        const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
+        const balance = oldBalance + pointsReceived;
+        const newOutput = points.setBalance(balanceSheet, user, balance);
+        const octokit = github.getOctokit(core.getInput("token"));
+        yield octokit.repos.createOrUpdateFileContents({
+            owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+            repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+            path: ".github/gbp-balances.toml",
+            message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
+            content: newOutput,
+            committer: COMMITTER,
+        });
+        // Only send comment after its ensured the GBP is saved
+        // TODO: Don't send for maintainers (commit access)
+        let comment;
+        if (balance > 0 && oldBalance < 0) {
+            comment =
+                `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
+                    "Feel free to make Feature/Balance PRs.";
+        }
+        else if (balance < 0 && pointsReceived < 0) {
+            comment =
+                `Your Fix/Feature pull request is currently below zero (${balance}). ` +
+                    "Maintainers may close future Feature/Balance PRs. " +
+                    "Fixing issues or helping to improve the codebase will raise this score.";
+        }
+        if (comment !== undefined) {
+            yield octokit.issues.createComment({
+                owner: (_e = (_d = github.context.payload.repository) === null || _d === void 0 ? void 0 : _d.owner) === null || _e === void 0 ? void 0 : _e.login,
+                repo: (_f = github.context.payload.repository) === null || _f === void 0 ? void 0 : _f.name,
+                issue_number: pullRequest.number,
+                body: comment,
+            });
+        }
+    });
 }
 run();
 
@@ -13296,6 +13316,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.setBalance = exports.readBalances = exports.readBalanceFile = exports.getPointsFromLabels = exports.HEADER = void 0;
@@ -13328,14 +13357,16 @@ function getUserId(line) {
     }
     return userId;
 }
-async function readBalanceFile() {
-    return fs_1.promises
-        .open("./.github/gbp-balances.toml", "r")
-        .then((file) => file.readFile({
-        encoding: "utf-8",
-    }))
-        .catch(() => {
-        return undefined;
+function readBalanceFile() {
+    return __awaiter(this, void 0, void 0, function* () {
+        return fs_1.promises
+            .open("./.github/gbp-balances.toml", "r")
+            .then((file) => file.readFile({
+            encoding: "utf-8",
+        }))
+            .catch(() => {
+            return undefined;
+        });
     });
 }
 exports.readBalanceFile = readBalanceFile;
