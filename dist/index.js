@@ -13223,10 +13223,6 @@ const github = __importStar(__nccwpck_require__(5873));
 const toml = __importStar(__nccwpck_require__(8830));
 const configuration_1 = __nccwpck_require__(5139);
 const points = __importStar(__nccwpck_require__(5474));
-const COMMITTER = {
-    name: "tgstation-server",
-    email: "tgstation-server@tgstation13.org",
-};
 function run() {
     var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
@@ -13282,7 +13278,7 @@ function run() {
             // Most likely 404
             return undefined;
         });
-        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), committer: COMMITTER, sha }));
+        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
         // Only send comment after its ensured the GBP is saved
         // TODO: Don't send for maintainers (commit access)
         let comment;

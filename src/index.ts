@@ -5,11 +5,6 @@ import { readConfiguration } from "./configuration"
 import { GithubLabel, GithubUser } from "./github"
 import * as points from "./points"
 
-const COMMITTER = {
-    name: "tgstation-server",
-    email: "tgstation-server@tgstation13.org",
-}
-
 async function run() {
     const configuration = await readConfiguration().catch((reason) => {
         return Promise.reject(`Couldn't read configuration file.\n${reason}`)
@@ -85,7 +80,6 @@ async function run() {
         ...fileContentsParams,
         message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
         content: Buffer.from(newOutput, "binary").toString("base64"),
-        committer: COMMITTER,
         sha,
     })
 
