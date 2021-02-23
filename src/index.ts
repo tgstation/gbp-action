@@ -1,8 +1,14 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
+import { promises as fs } from "fs"
 import { readConfiguration } from "./configuration"
 import { GithubLabel, GithubUser } from "./github"
-import { getPointsFromLabels } from "./points"
+import * as points from "./points"
+
+const COMMITTER = {
+    name: "tgstation-server",
+    email: "tgstation-server@tgstation13.org",
+}
 
 async function run() {
     const configuration = await readConfiguration().catch((reason) => {
@@ -14,6 +20,11 @@ async function run() {
     if (pullRequest === undefined) {
         core.setFailed(`No pull request was provided.`)
         process.exit(1)
+    }
+
+    if (!pullRequest.merged) {
+        core.info("Pull request was closed, not merged.")
+        return
     }
 
     const labels: GithubLabel[] = pullRequest.labels
@@ -28,7 +39,47 @@ async function run() {
         process.exit(1)
     }
 
-    const points = getPointsFromLabels(configuration, labelNames)
+    const balanceSheet = await points.readBalanceFile()
+    const oldBalance =
+        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+    const pointsReceived = points.getPointsFromLabels(configuration, labelNames)
+    const balance = oldBalance + pointsReceived
+
+    const newOutput = points.setBalance(balanceSheet, user, balance)
+    const octokit = github.getOctokit(core.getInput("token"))
+
+    await octokit.repos.createOrUpdateFileContents({
+        owner: github.context.payload.repository?.owner?.login!,
+        repo: github.context.payload.repository?.name!,
+        path: ".github/gbp-balances.toml",
+        message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
+        content: newOutput,
+        committer: COMMITTER,
+    })
+
+    // Only send comment after its ensured the GBP is saved
+    // TODO: Don't send for maintainers (commit access)
+    let comment
+
+    if (balance > 0 && oldBalance < 0) {
+        comment =
+            `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
+            "Feel free to make Feature/Balance PRs."
+    } else if (balance < 0 && pointsReceived < 0) {
+        comment =
+            `Your Fix/Feature pull request is currently below zero (${balance}). ` +
+            "Maintainers may close future Feature/Balance PRs. " +
+            "Fixing issues or helping to improve the codebase will raise this score."
+    }
+
+    if (comment !== undefined) {
+        await octokit.issues.createComment({
+            owner: github.context.payload.repository?.owner?.login!,
+            repo: github.context.payload.repository?.name!,
+            issue_number: pullRequest.number,
+            body: comment,
+        })
+    }
 }
 
 run()

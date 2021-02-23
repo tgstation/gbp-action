@@ -18,7 +18,8 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
-    "joi": "^17.4.0",
+    "fp-ts": "^2.9.5",
+    "io-ts": "^2.2.15",
     "toml": "^3.0.0"
   },
   "devDependencies": {
@@ -26,7 +27,6 @@
     "@babel/preset-env": "^7.13.0",
     "@babel/preset-typescript": "^7.13.0",
     "@types/jest": "^26.0.20",
-    "@types/joi": "^17.2.3",
     "@types/node": "^14.14.31",
     "babel-jest": "^26.6.3",
     "jest": "^26.6.3"

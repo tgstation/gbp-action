@@ -1,6 +1,7 @@
-import * as Joi from "joi"
-import * as toml from "toml"
 import { promises as fs } from "fs"
+import { isRight } from "fp-ts/lib/Either"
+import * as t from "io-ts"
+import * as toml from "toml"
 
 export type Configuration = {
     no_balance_label?: string
@@ -9,25 +10,38 @@ export type Configuration = {
     points: Map<string, number>
 }
 
-const configurationSchema = Joi.object({
-    no_balance_label: Joi.string().optional(),
-    reset_label: Joi.string().optional(),
+const configurationSchema = t.intersection([
+    t.partial({
+        no_balance_label: t.string,
+        reset_label: t.string,
+    }),
 
-    points: Joi.object().pattern(Joi.string(), Joi.number()),
-})
+    t.interface({
+        points: t.record(t.string, t.number),
+    }),
+])
+
+export function parseConfig(configurationText: string): Configuration {
+    const valueEither = configurationSchema.decode(
+        toml.parse(configurationText),
+    )
+
+    if (isRight(valueEither)) {
+        const value = valueEither.right
+
+        return {
+            ...value,
+            points: new Map(Object.entries(value.points)),
+        }
+    } else {
+        throw valueEither.left
+    }
+}
 
 export async function readConfiguration(): Promise<Configuration> {
     const configFile = await fs.readFile("./.github/gbp.toml", {
         encoding: "utf-8",
     })
 
-    const data = toml.parse(configFile)
-    const value = await configurationSchema.validateAsync(data)
-
-    return {
-        no_balance_label: value.no_balance_label,
-        reset_label: value.reset_label,
-
-        points: new Map(Object.entries(value.points)),
-    }
+    return parseConfig(configFile)
 }
