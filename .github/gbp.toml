@@ -1,3 +1,6 @@
+no_balance_label = "GBP: No balance"
+reset_label = "GBP: Reset"
+
 [points]
 "give points" = 10
 "lose points" = -10
