@@ -4,6 +4,7 @@ import * as t from "io-ts"
 import * as toml from "toml"
 
 export type Configuration = {
+    maintainer_team_slug?: string
     no_balance_label?: string
     reset_label?: string
 

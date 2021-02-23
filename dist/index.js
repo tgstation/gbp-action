@@ -13222,6 +13222,7 @@ const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
 const toml = __importStar(__nccwpck_require__(8830));
 const configuration_1 = __nccwpck_require__(5139);
+const isMaintainer_1 = __nccwpck_require__(7470);
 const points = __importStar(__nccwpck_require__(5474));
 function run() {
     var _a, _b, _c, _d, _e, _f;
@@ -13279,6 +13280,9 @@ function run() {
             return undefined;
         });
         yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
+        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
+            return;
+        }
         // Only send comment after its ensured the GBP is saved
         // TODO: Don't send for maintainers (commit access)
         let comment;
@@ -13306,6 +13310,64 @@ function run() {
 run().catch((problem) => {
     core.setFailed(problem.toString());
 });
+
+
+/***/ }),
+
+/***/ 7470:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isMaintainer = void 0;
+function isMaintainer(octokit, maintainerTeamSlug, payload, user) {
+    var _a, _b, _c, _d, _e, _f;
+    return __awaiter(this, void 0, void 0, function* () {
+        if (maintainerTeamSlug === undefined ||
+            ((_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.repo.owner.type) !== "Organization") {
+            const collaborator = yield octokit.repos
+                .getCollaboratorPermissionLevel({
+                owner: (_c = (_b = payload.repository) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.login,
+                repo: (_d = payload.repository) === null || _d === void 0 ? void 0 : _d.name,
+                username: user.login,
+            })
+                .catch(() => {
+                return undefined;
+            });
+            if (collaborator === undefined) {
+                return false;
+            }
+            const permission = collaborator.data.permission;
+            return permission === "admin" || permission === "write";
+        }
+        else {
+            const membership = yield octokit.teams
+                .getMembershipForUserInOrg({
+                org: (_f = (_e = payload.repository) === null || _e === void 0 ? void 0 : _e.owner) === null || _f === void 0 ? void 0 : _f.login,
+                team_slug: maintainerTeamSlug,
+                username: user.login,
+            })
+                .catch(() => {
+                return undefined;
+            });
+            if (membership === undefined) {
+                return false;
+            }
+            return membership.data.state === "active";
+        }
+    });
+}
+exports.isMaintainer = isMaintainer;
 
 
 /***/ }),

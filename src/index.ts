@@ -2,6 +2,7 @@ import * as core from "@actions/core"
 import * as github from "@actions/github"
 import * as toml from "toml"
 import { readConfiguration } from "./configuration"
+import { isMaintainer } from "./isMaintainer"
 import { GithubLabel, GithubUser } from "./github"
 import * as points from "./points"
 
@@ -82,6 +83,17 @@ async function run() {
         content: Buffer.from(newOutput, "binary").toString("base64"),
         sha,
     })
+
+    if (
+        await isMaintainer(
+            octokit,
+            configuration.maintainer_team_slug,
+            github.context.payload,
+            user,
+        )
+    ) {
+        return
+    }
 
     // Only send comment after its ensured the GBP is saved
     // TODO: Don't send for maintainers (commit access)
