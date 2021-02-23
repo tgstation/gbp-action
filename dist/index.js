@@ -13258,7 +13258,7 @@ function run() {
             repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
             path: ".github/gbp-balances.toml",
             message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-            content: newOutput,
+            content: Buffer.from(newOutput, "binary").toString("base64"),
             committer: COMMITTER,
         });
         // Only send comment after its ensured the GBP is saved

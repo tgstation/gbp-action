@@ -1,6 +1,5 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
-import { promises as fs } from "fs"
 import { readConfiguration } from "./configuration"
 import { GithubLabel, GithubUser } from "./github"
 import * as points from "./points"
@@ -50,7 +49,7 @@ async function run() {
         repo: github.context.payload.repository?.name!,
         path: ".github/gbp-balances.toml",
         message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-        content: newOutput,
+        content: Buffer.from(newOutput, "binary").toString("base64"),
         committer: COMMITTER,
     })
 
