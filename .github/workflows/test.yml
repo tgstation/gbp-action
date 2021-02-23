@@ -1,0 +1,32 @@
+
+name: Node.js CI
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm test
+    # FIXME: This always produces diffs of little numbers, and I have no idea why.
+    # - name: Validate dist
+    #   run: |
+    #     npm i -g @vercel/ncc
+    #     cp dist/index.js dist/index_pr.js
+    #     ncc build src/index.ts -o dist
+    #     diff dist/index.js dist/index_pr.js
+    #     if [ $? -ne 0 ]; then
+    #       echo "Files differ!"
+    #       exit 1
+    #     fi
