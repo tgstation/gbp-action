@@ -13251,6 +13251,9 @@ function run() {
         const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
         const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
         const balance = oldBalance + pointsReceived;
+        if (pointsReceived === 0) {
+            return;
+        }
         const newOutput = points.setBalance(balanceSheet, user, balance);
         const octokit = github.getOctokit(core.getInput("token"));
         const fileContentsParams = {
