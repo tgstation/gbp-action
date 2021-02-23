@@ -12,14 +12,12 @@ const COMMITTER = {
 
 async function run() {
     const configuration = await readConfiguration().catch((reason) => {
-        core.setFailed(`Couldn't read configuration file.\n${reason}`)
-        process.exit(1)
+        return Promise.reject(`Couldn't read configuration file.\n${reason}`)
     })
 
     const pullRequest = github.context.payload.pull_request
     if (pullRequest === undefined) {
-        core.setFailed(`No pull request was provided.`)
-        process.exit(1)
+        return Promise.reject(`No pull request was provided.`)
     }
 
     if (!pullRequest.merged) {
@@ -35,8 +33,7 @@ async function run() {
         configuration.reset_label !== undefined &&
         labelNames.indexOf(configuration.reset_label) !== -1
     ) {
-        core.setFailed("NYI: GBP: Reset")
-        process.exit(1)
+        return Promise.reject("NYI: GBP: Reset")
     }
 
     const balanceSheet = await points.readBalanceFile()
@@ -82,4 +79,6 @@ async function run() {
     }
 }
 
-run()
+run().catch((problem) => {
+    core.error(problem.toString())
+})
