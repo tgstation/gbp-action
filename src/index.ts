@@ -1,5 +1,6 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
+import * as toml from "toml"
 import { readConfiguration } from "./configuration"
 import { GithubLabel, GithubUser } from "./github"
 import * as points from "./points"
@@ -46,6 +47,14 @@ async function run() {
     }
 
     const newOutput = points.setBalance(balanceSheet, user, balance)
+    try {
+        toml.parse(newOutput)
+    } catch {
+        return Promise.reject(
+            `setBalance resulted in invalid output: ${newOutput}`,
+        )
+    }
+
     const octokit = github.getOctokit(core.getInput("token"))
 
     const fileContentsParams = {

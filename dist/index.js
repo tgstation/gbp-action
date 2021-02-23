@@ -13220,6 +13220,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
+const toml = __importStar(__nccwpck_require__(8830));
 const configuration_1 = __nccwpck_require__(5139);
 const points = __importStar(__nccwpck_require__(5474));
 const COMMITTER = {
@@ -13255,6 +13256,12 @@ function run() {
             return;
         }
         const newOutput = points.setBalance(balanceSheet, user, balance);
+        try {
+            toml.parse(newOutput);
+        }
+        catch (_g) {
+            return Promise.reject(`setBalance resulted in invalid output: ${newOutput}`);
+        }
         const octokit = github.getOctokit(core.getInput("token"));
         const fileContentsParams = {
             owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
