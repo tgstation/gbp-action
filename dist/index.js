@@ -13253,14 +13253,22 @@ function run() {
         const balance = oldBalance + pointsReceived;
         const newOutput = points.setBalance(balanceSheet, user, balance);
         const octokit = github.getOctokit(core.getInput("token"));
-        yield octokit.repos.createOrUpdateFileContents({
+        const fileContentsParams = {
             owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
             repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
             path: ".github/gbp-balances.toml",
-            message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-            content: Buffer.from(newOutput, "binary").toString("base64"),
-            committer: COMMITTER,
+        };
+        const sha = yield octokit.repos
+            .getContent(fileContentsParams)
+            .then((contents) => {
+            const data = contents.data;
+            return Array.isArray(data) ? undefined : data.sha;
+        })
+            .catch(() => {
+            // Most likely 404
+            return undefined;
         });
+        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), committer: COMMITTER, sha }));
         // Only send comment after its ensured the GBP is saved
         // TODO: Don't send for maintainers (commit access)
         let comment;

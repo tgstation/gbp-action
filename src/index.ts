@@ -44,13 +44,29 @@ async function run() {
     const newOutput = points.setBalance(balanceSheet, user, balance)
     const octokit = github.getOctokit(core.getInput("token"))
 
-    await octokit.repos.createOrUpdateFileContents({
+    const fileContentsParams = {
         owner: github.context.payload.repository?.owner?.login!,
         repo: github.context.payload.repository?.name!,
         path: ".github/gbp-balances.toml",
+    }
+
+    const sha = await octokit.repos
+        .getContent(fileContentsParams)
+        .then((contents) => {
+            const data = contents.data
+            return Array.isArray(data) ? undefined : data.sha
+        })
+        .catch(() => {
+            // Most likely 404
+            return undefined
+        })
+
+    await octokit.repos.createOrUpdateFileContents({
+        ...fileContentsParams,
         message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
         content: Buffer.from(newOutput, "binary").toString("base64"),
         committer: COMMITTER,
+        sha,
     })
 
     // Only send comment after its ensured the GBP is saved
