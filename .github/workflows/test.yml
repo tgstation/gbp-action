@@ -22,8 +22,9 @@ jobs:
     - name: Validate dist
       run: |
         npm i -g @vercel/ncc
-        ncc build src/index.ts -o dist2;
-        diff dist/index.js dist2/index.js
+        cp dist/index.js dist/index_pr.js
+        ncc build src/index.ts -o dist
+        diff dist/index.js dist/index_pr.js
         if [ $? -ne 0 ]; then
           echo "Files differ!"
           exit 1
