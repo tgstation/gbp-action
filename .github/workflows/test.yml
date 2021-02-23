@@ -21,7 +21,7 @@ jobs:
     - run: npm test
     - name: Validate dist
       run: |
-        npm i -g ncc
+        npm i -g @vercel/ncc
         ncc build src/index.ts -o dist2;
         diff dist/index.js dist2/index.js
         if [ $? -ne 0 ]; then
