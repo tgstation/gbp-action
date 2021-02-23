@@ -92,6 +92,7 @@ async function run() {
             user,
         )
     ) {
+        core.info("Author is maintainer")
         return
     }
 

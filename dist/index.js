@@ -13281,6 +13281,7 @@ function run() {
         });
         yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
         if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
+            core.info("Author is maintainer");
             return;
         }
         // Only send comment after its ensured the GBP is saved
