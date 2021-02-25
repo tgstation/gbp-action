@@ -97,7 +97,6 @@ async function run() {
     }
 
     // Only send comment after its ensured the GBP is saved
-    // TODO: Don't send for maintainers (commit access)
     let comment
 
     if (balance > 0 && oldBalance < 0) {
