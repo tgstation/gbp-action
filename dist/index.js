@@ -13112,6 +13112,202 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 1268:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.merged = void 0;
+const core = __importStar(__nccwpck_require__(3923));
+const github = __importStar(__nccwpck_require__(5873));
+const toml = __importStar(__nccwpck_require__(8830));
+const isMaintainer_1 = __nccwpck_require__(7470);
+const points = __importStar(__nccwpck_require__(5474));
+function merged(configuration) {
+    var _a, _b, _c, _d, _e, _f;
+    return __awaiter(this, void 0, void 0, function* () {
+        const pullRequest = github.context.payload.pull_request;
+        if (pullRequest === undefined) {
+            return Promise.reject(`No pull request was provided.`);
+        }
+        if (!pullRequest.merged) {
+            core.info("Pull request was closed, not merged.");
+            return;
+        }
+        const labels = pullRequest.labels;
+        const labelNames = labels.map((label) => label.name);
+        const user = pullRequest.user;
+        const balanceSheet = yield points.readBalanceFile();
+        const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
+        let balance;
+        let pointsReceived = 0;
+        if (configuration.reset_label !== undefined &&
+            labelNames.indexOf(configuration.reset_label) !== -1) {
+            balance = 0;
+        }
+        else {
+            const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
+            balance = oldBalance + pointsReceived;
+            if (pointsReceived === 0) {
+                return;
+            }
+        }
+        const newOutput = points.setBalance(balanceSheet, user, balance);
+        try {
+            toml.parse(newOutput);
+        }
+        catch (_g) {
+            return Promise.reject(`setBalance resulted in invalid output: ${newOutput}`);
+        }
+        const octokit = github.getOctokit(core.getInput("token"));
+        const fileContentsParams = {
+            owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+            repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+            path: ".github/gbp-balances.toml",
+        };
+        const sha = yield octokit.repos
+            .getContent(fileContentsParams)
+            .then((contents) => {
+            const data = contents.data;
+            return Array.isArray(data) ? undefined : data.sha;
+        })
+            .catch(() => {
+            // Most likely 404
+            return undefined;
+        });
+        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
+        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
+            core.info("Author is maintainer");
+            return;
+        }
+        // Only send comment after its ensured the GBP is saved
+        let comment;
+        if (balance > 0 && oldBalance < 0) {
+            comment =
+                `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
+                    "Feel free to make Feature/Balance PRs.";
+        }
+        else if (balance < 0 && pointsReceived < 0) {
+            comment =
+                `Your Fix/Feature pull request is currently below zero (${balance}). ` +
+                    "Maintainers may close future Feature/Balance PRs. " +
+                    "Fixing issues or helping to improve the codebase will raise this score.";
+        }
+        if (comment !== undefined) {
+            yield octokit.issues.createComment({
+                owner: (_e = (_d = github.context.payload.repository) === null || _d === void 0 ? void 0 : _d.owner) === null || _e === void 0 ? void 0 : _e.login,
+                repo: (_f = github.context.payload.repository) === null || _f === void 0 ? void 0 : _f.name,
+                issue_number: pullRequest.number,
+                body: comment,
+            });
+        }
+    });
+}
+exports.merged = merged;
+
+
+/***/ }),
+
+/***/ 8350:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.opened = void 0;
+const core = __importStar(__nccwpck_require__(3923));
+const github = __importStar(__nccwpck_require__(5873));
+const isMaintainer_1 = __nccwpck_require__(7470);
+const points = __importStar(__nccwpck_require__(5474));
+function opened(configuration) {
+    var _a, _b, _c;
+    return __awaiter(this, void 0, void 0, function* () {
+        const pullRequest = github.context.payload.pull_request;
+        if (pullRequest === undefined) {
+            return Promise.reject(`No pull request was provided.`);
+        }
+        const octokit = github.getOctokit(core.getInput("token"));
+        const user = pullRequest.user;
+        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
+            core.info("Author is maintainer");
+            return;
+        }
+        const balanceSheet = yield points.readBalanceFile();
+        const userBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
+        if (userBalance < 0) {
+            yield octokit.issues.createComment({
+                owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+                repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+                issue_number: pullRequest.number,
+                body: `You currently have a negative Fix/Feature pull request delta of ${userBalance}. ` +
+                    "Maintainers may close this PR at will. Fixing issues or improving the codebase " +
+                    "will improve this score.",
+            });
+        }
+    });
+}
+exports.opened = opened;
+
+
+/***/ }),
+
 /***/ 5139:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -13220,91 +13416,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
-const toml = __importStar(__nccwpck_require__(8830));
+const merged_1 = __nccwpck_require__(1268);
+const opened_1 = __nccwpck_require__(8350);
 const configuration_1 = __nccwpck_require__(5139);
-const isMaintainer_1 = __nccwpck_require__(7470);
-const points = __importStar(__nccwpck_require__(5474));
 function run() {
-    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         const configuration = yield configuration_1.readConfiguration().catch((reason) => {
             return Promise.reject(`Couldn't read configuration file.\n${reason}`);
         });
-        const pullRequest = github.context.payload.pull_request;
-        if (pullRequest === undefined) {
-            return Promise.reject(`No pull request was provided.`);
-        }
-        if (!pullRequest.merged) {
-            core.info("Pull request was closed, not merged.");
-            return;
-        }
-        const labels = pullRequest.labels;
-        const labelNames = labels.map((label) => label.name);
-        const user = pullRequest.user;
-        const balanceSheet = yield points.readBalanceFile();
-        const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
-        let balance;
-        let pointsReceived = 0;
-        if (configuration.reset_label !== undefined &&
-            labelNames.indexOf(configuration.reset_label) !== -1) {
-            balance = 0;
-        }
-        else {
-            const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
-            balance = oldBalance + pointsReceived;
-            if (pointsReceived === 0) {
-                return;
-            }
-        }
-        const newOutput = points.setBalance(balanceSheet, user, balance);
-        try {
-            toml.parse(newOutput);
-        }
-        catch (_g) {
-            return Promise.reject(`setBalance resulted in invalid output: ${newOutput}`);
-        }
-        const octokit = github.getOctokit(core.getInput("token"));
-        const fileContentsParams = {
-            owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
-            repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
-            path: ".github/gbp-balances.toml",
-        };
-        const sha = yield octokit.repos
-            .getContent(fileContentsParams)
-            .then((contents) => {
-            const data = contents.data;
-            return Array.isArray(data) ? undefined : data.sha;
-        })
-            .catch(() => {
-            // Most likely 404
-            return undefined;
-        });
-        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
-        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
-            core.info("Author is maintainer");
-            return;
-        }
-        // Only send comment after its ensured the GBP is saved
-        // TODO: Don't send for maintainers (commit access)
-        let comment;
-        if (balance > 0 && oldBalance < 0) {
-            comment =
-                `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
-                    "Feel free to make Feature/Balance PRs.";
-        }
-        else if (balance < 0 && pointsReceived < 0) {
-            comment =
-                `Your Fix/Feature pull request is currently below zero (${balance}). ` +
-                    "Maintainers may close future Feature/Balance PRs. " +
-                    "Fixing issues or helping to improve the codebase will raise this score.";
-        }
-        if (comment !== undefined) {
-            yield octokit.issues.createComment({
-                owner: (_e = (_d = github.context.payload.repository) === null || _d === void 0 ? void 0 : _d.owner) === null || _e === void 0 ? void 0 : _e.login,
-                repo: (_f = github.context.payload.repository) === null || _f === void 0 ? void 0 : _f.name,
-                issue_number: pullRequest.number,
-                body: comment,
-            });
+        switch (github.context.payload.action) {
+            case "opened":
+                return opened_1.opened(configuration);
+            case "closed":
+                return merged_1.merged(configuration);
+            default:
+                core.info(`Unknown action: ${github.context.payload.action}`);
         }
     });
 }
