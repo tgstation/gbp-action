@@ -13211,7 +13211,7 @@ function merged(configuration) {
         }
         // Only send comment after its ensured the GBP is saved
         let comment;
-        if (balance > 0 && oldBalance < 0) {
+        if (balance >= 0 && oldBalance < 0) {
             comment =
                 `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
                     "Feel free to make Feature/Balance PRs.";
