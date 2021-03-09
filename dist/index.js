@@ -13291,7 +13291,10 @@ function opened(configuration) {
         }
         const balanceSheet = yield points.readBalanceFile();
         const userBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
-        if (userBalance < 0) {
+        const labels = pullRequest.labels;
+        const labelNames = labels.map((label) => label.name);
+        const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
+        if (userBalance < 0 && pointsReceived <= 0) {
             yield octokit.issues.createComment({
                 owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
                 repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,

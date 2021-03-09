@@ -1,7 +1,7 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { Configuration } from "../configuration"
-import { GithubUser } from "../github"
+import { GithubLabel, GithubUser } from "../github"
 import { isMaintainer } from "../isMaintainer"
 import * as points from "../points"
 
@@ -30,7 +30,12 @@ export async function opened(configuration: Configuration) {
     const userBalance =
         (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
 
-    if (userBalance < 0) {
+    const labels: GithubLabel[] = pullRequest.labels
+    const labelNames = labels.map((label) => label.name)
+
+    const pointsReceived = points.getPointsFromLabels(configuration, labelNames)
+
+    if (userBalance < 0 && pointsReceived <= 0) {
         await octokit.issues.createComment({
             owner: github.context.payload.repository?.owner?.login!,
             repo: github.context.payload.repository?.name!,
