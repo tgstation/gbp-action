@@ -21,15 +21,6 @@ export function getPointsFromLabels(
     return points
 }
 
-function getUserId(line: string): number | undefined {
-    const userId = parseInt(line.split(" ")[0], 10)
-    if (Number.isNaN(userId)) {
-        return undefined
-    }
-
-    return userId
-}
-
 export function readBalanceOf(
     octokit: ReturnType<typeof getOctokit>,
     owner: string,
@@ -66,12 +57,28 @@ export async function writeBalanceOf(
     userId: number,
     points: number,
 ): Promise<void> {
+    const filePath = path.join(POINTS_DIRECTORY, `${userId}.txt`)
+
     await octokit.repos.createOrUpdateFileContents({
         owner,
         repo,
         branch,
         message,
-        path: path.join(POINTS_DIRECTORY, `${userId}.txt`),
         content: Buffer.from(points.toString(), "binary").toString("base64"),
+        path: filePath,
+        sha: await octokit.repos
+            .getContent({
+                owner,
+                repo,
+                path: filePath,
+            })
+            .then((contents) => {
+                const data = contents.data
+                return Array.isArray(data) ? undefined : data.sha
+            })
+            .catch(() => {
+                // Most likely 404
+                return undefined
+            }),
     })
 }
