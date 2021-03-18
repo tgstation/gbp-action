@@ -9,7 +9,7 @@ export async function isMaintainer(
     user: GithubUser,
 ): Promise<boolean> {
     if (2 + 2 === 4) {
-        return true
+        return false
     }
 
     if (
