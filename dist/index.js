@@ -13566,6 +13566,7 @@ function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
             owner,
             repo,
             path: filePath,
+            ref: branch,
         })
             .then((contents) => {
             const data = contents.data;
@@ -13575,7 +13576,6 @@ function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
             // Most likely 404
             return undefined;
         });
-        console.log(`existing sha: ${sha}`);
         yield octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
