@@ -26,9 +26,8 @@ export async function opened(configuration: Configuration) {
         return
     }
 
-    const balanceSheet = await points.readBalanceFile()
     const userBalance =
-        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+        (await points.readBalanceOf(configuration.branch, user.id)) || 0
 
     const labels: GithubLabel[] = pullRequest.labels
     const labelNames = labels.map((label) => label.name)

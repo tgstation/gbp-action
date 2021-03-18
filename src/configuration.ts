@@ -3,6 +3,7 @@ import { isRight } from "fp-ts/lib/Either"
 import * as t from "io-ts"
 import * as toml from "toml"
 
+const BLACKLISTED_NAMES = new Set(["master", "main"])
 const DEFAULT_BRANCH = "gbp-balances"
 
 export type Configuration = {
@@ -16,6 +17,7 @@ export type Configuration = {
 
 const configurationSchema = t.intersection([
     t.partial({
+        branch: t.string,
         no_balance_label: t.string,
         reset_label: t.string,
     }),
@@ -32,6 +34,13 @@ export function parseConfig(configurationText: string): Configuration {
 
     if (isRight(valueEither)) {
         const value = valueEither.right
+
+        if (value.branch !== undefined && BLACKLISTED_NAMES.has(value.branch)) {
+            throw `${value.branch} is a blacklisted name, as it is certainly not what you want. \
+                The branches gbp-action uses should be used EXCLUSIVELY for gbp-actions. \
+                The action will wipe the branch COMPLETELY, and use it just to store balances. \
+            `
+        }
 
         return {
             branch: DEFAULT_BRANCH,

@@ -21,9 +21,8 @@ export async function merged(configuration: Configuration) {
     const labelNames = labels.map((label) => label.name)
     const user: GithubUser = pullRequest.user
 
-    const balanceSheet = await points.readBalanceFile()
     const oldBalance =
-        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+        (await points.readBalanceOf(configuration.branch, user.id)) || 0
 
     let balance
     let pointsReceived = 0
@@ -45,40 +44,24 @@ export async function merged(configuration: Configuration) {
         }
     }
 
-    const newOutput = points.setBalance(balanceSheet, user, balance)
-    try {
-        toml.parse(newOutput)
-    } catch {
-        return Promise.reject(
-            `setBalance resulted in invalid output: ${newOutput}`,
-        )
-    }
-
     const octokit = github.getOctokit(core.getInput("token"))
 
-    const fileContentsParams = {
-        owner: github.context.payload.repository?.owner?.login!,
-        repo: github.context.payload.repository?.name!,
-        path: ".github/gbp-balances.toml",
-    }
+    // await octokit.repos.createOrUpdateFileContents({
+    //     ...fileContentsParams,
+    //     message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
+    //     content: Buffer.from(newOutput, "binary").toString("base64"),
+    //     sha,
+    // })
 
-    const sha = await octokit.repos
-        .getContent(fileContentsParams)
-        .then((contents) => {
-            const data = contents.data
-            return Array.isArray(data) ? undefined : data.sha
-        })
-        .catch(() => {
-            // Most likely 404
-            return undefined
-        })
-
-    await octokit.repos.createOrUpdateFileContents({
-        ...fileContentsParams,
-        message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-        content: Buffer.from(newOutput, "binary").toString("base64"),
-        sha,
-    })
+    await points.writeBalanceOf(
+        configuration.branch,
+        github.context.payload.repository?.owner?.login!,
+        github.context.payload.repository?.name!,
+        `Updating GBP from PR #${pullRequest.number} [ci skip]`,
+        user.id,
+        balance,
+        octokit,
+    )
 
     if (
         await isMaintainer(
