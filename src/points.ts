@@ -21,31 +21,36 @@ export function getPointsFromLabels(
     return points
 }
 
-export function readBalanceOf(
+export async function readBalanceOf(
     octokit: ReturnType<typeof getOctokit>,
     owner: string,
     repo: string,
     branch: string,
     id: number,
 ): Promise<number | undefined> {
-    return octokit.repos
+    const content = await octokit.repos
         .getContent({
             owner,
             repo,
             path: path.join(POINTS_DIRECTORY, `${id}.txt`),
             ref: branch,
         })
-        .then((content) => {
-            const data = content.data as {
-                content: string
-            }
-
-            const points = parseInt(data.content, 10)
-            if (Number.isNaN(points)) {
-                return Promise.reject(`Points is somehow NaN: ${content}`)
-            }
-        })
         .catch(() => undefined)
+
+    if (content === undefined) {
+        return 0
+    }
+
+    const data = content.data as {
+        content: string
+    }
+
+    const points = parseInt(data.content, 10)
+    if (Number.isNaN(points)) {
+        return Promise.reject(`Points is somehow NaN: ${content}`)
+    }
+
+    return points
 }
 
 export async function writeBalanceOf(
