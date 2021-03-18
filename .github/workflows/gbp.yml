@@ -8,6 +8,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Pull GBP branch
+      run: |
+        git fetch origin gbp-balances
+
+        # Make sure it's loaded
+        git checkout gbp-balances
+
+        # Go back to master
+        git checkout master
     - name: GBP action
       uses: ./
       with:
