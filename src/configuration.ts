@@ -3,10 +3,13 @@ import { isRight } from "fp-ts/lib/Either"
 import * as t from "io-ts"
 import * as toml from "toml"
 
+const DEFAULT_BRANCH = "gbp-balances"
+
 export type Configuration = {
     maintainer_team_slug?: string
     no_balance_label?: string
     reset_label?: string
+    branch: string
 
     points: Map<string, number>
 }
@@ -31,6 +34,7 @@ export function parseConfig(configurationText: string): Configuration {
         const value = valueEither.right
 
         return {
+            branch: DEFAULT_BRANCH,
             ...value,
             points: new Map(Object.entries(value.points)),
         }
