@@ -13526,10 +13526,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.writeBalanceOf = exports.readBalanceOf = exports.getPointsFromLabels = void 0;
 const path = __importStar(__nccwpck_require__(5622));
 const POINTS_DIRECTORY = "points";
-// https://github.community/t/create-orphan-branch-using-octokit-api-1984/157029/2
-const SHA1_EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
-const README = "This branch is used and automatically managed by [gbp-action](https://github.com/tgstation/gbp-action). \
-    Don't touch it yourself unless you know what you're doing.";
 function getPointsFromLabels(configuration, labels) {
     let points = 0;
     for (const label of labels) {
@@ -13571,24 +13567,6 @@ function readBalanceOf(octokit, owner, repo, branch, id) {
 exports.readBalanceOf = readBalanceOf;
 function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
     return __awaiter(this, void 0, void 0, function* () {
-        const branchExists = yield octokit.git
-            .getRef({
-            owner,
-            repo,
-            ref: `heads/${branch}`,
-        })
-            .then(() => true)
-            .catch(() => false);
-        if (!branchExists) {
-            yield octokit.repos.createOrUpdateFileContents({
-                owner,
-                repo,
-                branch,
-                path: "README.md",
-                message: "Initial commit",
-                content: README,
-            });
-        }
         yield octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
