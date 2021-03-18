@@ -65,7 +65,6 @@ export async function writeBalanceOf(
     message: string,
     userId: number,
     points: number,
-    sha: string,
 ): Promise<void> {
     await octokit.repos.createOrUpdateFileContents({
         owner,
