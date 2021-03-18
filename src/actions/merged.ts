@@ -46,13 +46,6 @@ export async function merged(configuration: Configuration) {
 
     const octokit = github.getOctokit(core.getInput("token"))
 
-    // await octokit.repos.createOrUpdateFileContents({
-    //     ...fileContentsParams,
-    //     message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-    //     content: Buffer.from(newOutput, "binary").toString("base64"),
-    //     sha,
-    // })
-
     await points.writeBalanceOf(
         configuration.branch,
         github.context.payload.repository?.owner?.login!,
