@@ -64,6 +64,7 @@ export async function writeBalanceOf(
             owner,
             repo,
             path: filePath,
+            ref: branch,
         })
         .then((contents) => {
             const data = contents.data
@@ -73,8 +74,6 @@ export async function writeBalanceOf(
             // Most likely 404
             return undefined
         })
-
-    console.log(`existing sha: ${sha}`)
 
     await octokit.repos.createOrUpdateFileContents({
         owner,
