@@ -45,7 +45,11 @@ export async function readBalanceOf(
         content: string
     }
 
-    const points = parseInt(data.content, 10)
+    const points = parseInt(
+        Buffer.from(data.content, "base64").toString("ascii"),
+        10,
+    )
+
     if (Number.isNaN(points)) {
         return Promise.reject(`Points is somehow NaN: ${data.content}`)
     }
