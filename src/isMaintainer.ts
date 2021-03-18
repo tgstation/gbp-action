@@ -8,10 +8,6 @@ export async function isMaintainer(
     payload: typeof github.context.payload,
     user: GithubUser,
 ): Promise<boolean> {
-    if (2 + 2 === 4) {
-        return false
-    }
-
     if (
         maintainerTeamSlug === undefined ||
         payload.pull_request?.base.repo.owner.type !== "Organization"
