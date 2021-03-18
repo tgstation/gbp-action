@@ -10,10 +10,10 @@ jobs:
       uses: actions/checkout@v2
     - name: Pull GBP branch
       run: |
-        git fetch origin gbp-balances
+        git fetch origin gbp-balances || true
 
         # Make sure it's loaded
-        git checkout gbp-balances
+        git checkout gbp-balances || true
 
         # Go back to master
         git checkout master
