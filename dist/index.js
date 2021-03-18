@@ -13540,13 +13540,6 @@ function getPointsFromLabels(configuration, labels) {
     return points;
 }
 exports.getPointsFromLabels = getPointsFromLabels;
-function getUserId(line) {
-    const userId = parseInt(line.split(" ")[0], 10);
-    if (Number.isNaN(userId)) {
-        return undefined;
-    }
-    return userId;
-}
 function readBalanceOf(octokit, owner, repo, branch, id) {
     return octokit.repos
         .getContent({
@@ -13567,13 +13560,28 @@ function readBalanceOf(octokit, owner, repo, branch, id) {
 exports.readBalanceOf = readBalanceOf;
 function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
     return __awaiter(this, void 0, void 0, function* () {
+        const filePath = path.join(POINTS_DIRECTORY, `${userId}.txt`);
         yield octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
             branch,
             message,
-            path: path.join(POINTS_DIRECTORY, `${userId}.txt`),
             content: Buffer.from(points.toString(), "binary").toString("base64"),
+            path: filePath,
+            sha: yield octokit.repos
+                .getContent({
+                owner,
+                repo,
+                path: filePath,
+            })
+                .then((contents) => {
+                const data = contents.data;
+                return Array.isArray(data) ? undefined : data.sha;
+            })
+                .catch(() => {
+                // Most likely 404
+                return undefined;
+            }),
         });
     });
 }
