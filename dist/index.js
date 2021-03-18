@@ -13541,21 +13541,25 @@ function getPointsFromLabels(configuration, labels) {
 }
 exports.getPointsFromLabels = getPointsFromLabels;
 function readBalanceOf(octokit, owner, repo, branch, id) {
-    return octokit.repos
-        .getContent({
-        owner,
-        repo,
-        path: path.join(POINTS_DIRECTORY, `${id}.txt`),
-        ref: branch,
-    })
-        .then((content) => {
+    return __awaiter(this, void 0, void 0, function* () {
+        const content = yield octokit.repos
+            .getContent({
+            owner,
+            repo,
+            path: path.join(POINTS_DIRECTORY, `${id}.txt`),
+            ref: branch,
+        })
+            .catch(() => undefined);
+        if (content === undefined) {
+            return 0;
+        }
         const data = content.data;
         const points = parseInt(data.content, 10);
         if (Number.isNaN(points)) {
             return Promise.reject(`Points is somehow NaN: ${content}`);
         }
-    })
-        .catch(() => undefined);
+        return points;
+    });
 }
 exports.readBalanceOf = readBalanceOf;
 function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
