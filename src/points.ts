@@ -87,13 +87,6 @@ export async function writeBalanceOf(
         .catch(() => false)
 
     if (!branchExists) {
-        await octokit.git.createRef({
-            owner,
-            repo,
-            ref: `refs/heads/${branch}`,
-            sha: SHA1_EMPTY_TREE,
-        })
-
         await octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
