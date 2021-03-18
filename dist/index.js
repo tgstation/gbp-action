@@ -13556,7 +13556,7 @@ function readBalanceOf(octokit, owner, repo, branch, id) {
         const data = content.data;
         const points = parseInt(data.content, 10);
         if (Number.isNaN(points)) {
-            return Promise.reject(`Points is somehow NaN: ${content}`);
+            return Promise.reject(`Points is somehow NaN: ${data.content}`);
         }
         return points;
     });
