@@ -27,7 +27,13 @@ export async function opened(configuration: Configuration) {
     }
 
     const userBalance =
-        (await points.readBalanceOf(configuration.branch, user.id)) || 0
+        (await points.readBalanceOf(
+            octokit,
+            github.context.payload.repository?.owner?.login!,
+            github.context.payload.repository?.name!,
+            configuration.branch,
+            user.id,
+        )) || 0
 
     const labels: GithubLabel[] = pullRequest.labels
     const labelNames = labels.map((label) => label.name)

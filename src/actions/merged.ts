@@ -21,8 +21,16 @@ export async function merged(configuration: Configuration) {
     const labelNames = labels.map((label) => label.name)
     const user: GithubUser = pullRequest.user
 
+    const octokit = github.getOctokit(core.getInput("token"))
+
     const oldBalance =
-        (await points.readBalanceOf(configuration.branch, user.id)) || 0
+        (await points.readBalanceOf(
+            octokit,
+            github.context.payload.repository?.owner?.login!,
+            github.context.payload.repository?.name!,
+            configuration.branch,
+            user.id,
+        )) || 0
 
     let balance
     let pointsReceived = 0
@@ -44,16 +52,14 @@ export async function merged(configuration: Configuration) {
         }
     }
 
-    const octokit = github.getOctokit(core.getInput("token"))
-
     await points.writeBalanceOf(
+        octokit,
         configuration.branch,
         github.context.payload.repository?.owner?.login!,
         github.context.payload.repository?.name!,
         `Updating GBP from PR #${pullRequest.number} [ci skip]`,
         user.id,
         balance,
-        octokit,
     )
 
     if (
