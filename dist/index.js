@@ -13580,12 +13580,6 @@ function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
             .then(() => true)
             .catch(() => false);
         if (!branchExists) {
-            yield octokit.git.createRef({
-                owner,
-                repo,
-                ref: `refs/heads/${branch}`,
-                sha: SHA1_EMPTY_TREE,
-            });
             yield octokit.repos.createOrUpdateFileContents({
                 owner,
                 repo,
