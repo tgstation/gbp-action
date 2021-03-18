@@ -13561,6 +13561,21 @@ exports.readBalanceOf = readBalanceOf;
 function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
     return __awaiter(this, void 0, void 0, function* () {
         const filePath = path.join(POINTS_DIRECTORY, `${userId}.txt`);
+        const sha = yield octokit.repos
+            .getContent({
+            owner,
+            repo,
+            path: filePath,
+        })
+            .then((contents) => {
+            const data = contents.data;
+            return Array.isArray(data) ? undefined : data.sha;
+        })
+            .catch(() => {
+            // Most likely 404
+            return undefined;
+        });
+        console.log(`existing sha: ${sha}`);
         yield octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
@@ -13568,20 +13583,7 @@ function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
             message,
             content: Buffer.from(points.toString(), "binary").toString("base64"),
             path: filePath,
-            sha: yield octokit.repos
-                .getContent({
-                owner,
-                repo,
-                path: filePath,
-            })
-                .then((contents) => {
-                const data = contents.data;
-                return Array.isArray(data) ? undefined : data.sha;
-            })
-                .catch(() => {
-                // Most likely 404
-                return undefined;
-            }),
+            sha,
         });
     });
 }
