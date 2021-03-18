@@ -8,7 +8,7 @@ export async function isMaintainer(
     payload: typeof github.context.payload,
     user: GithubUser,
 ): Promise<boolean> {
-    if (true) {
+    if (2 + 2 === 4) {
         return true
     }
 
