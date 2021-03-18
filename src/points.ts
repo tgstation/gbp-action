@@ -59,6 +59,23 @@ export async function writeBalanceOf(
 ): Promise<void> {
     const filePath = path.join(POINTS_DIRECTORY, `${userId}.txt`)
 
+    const sha = await octokit.repos
+        .getContent({
+            owner,
+            repo,
+            path: filePath,
+        })
+        .then((contents) => {
+            const data = contents.data
+            return Array.isArray(data) ? undefined : data.sha
+        })
+        .catch(() => {
+            // Most likely 404
+            return undefined
+        })
+
+    console.log(`existing sha: ${sha}`)
+
     await octokit.repos.createOrUpdateFileContents({
         owner,
         repo,
@@ -66,19 +83,6 @@ export async function writeBalanceOf(
         message,
         content: Buffer.from(points.toString(), "binary").toString("base64"),
         path: filePath,
-        sha: await octokit.repos
-            .getContent({
-                owner,
-                repo,
-                path: filePath,
-            })
-            .then((contents) => {
-                const data = contents.data
-                return Array.isArray(data) ? undefined : data.sha
-            })
-            .catch(() => {
-                // Most likely 404
-                return undefined
-            }),
+        sha,
     })
 }
