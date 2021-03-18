@@ -13448,7 +13448,7 @@ function isMaintainer(octokit, maintainerTeamSlug, payload, user) {
     var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         if (true) {
-            return true;
+            return false;
         }
         if (maintainerTeamSlug === undefined ||
             ((_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.repo.owner.type) !== "Organization") {
