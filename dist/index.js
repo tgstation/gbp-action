@@ -13573,7 +13573,7 @@ function writeBalanceOf(octokit, branch, owner, repo, message, userId, points) {
             branch,
             message,
             path: path.join(POINTS_DIRECTORY, `${userId}.txt`),
-            content: points.toString(),
+            content: Buffer.from(points.toString(), "binary").toString("base64"),
         });
     });
 }
