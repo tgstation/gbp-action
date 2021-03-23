@@ -271,7 +271,7 @@ export class GithubMediator implements Mediator {
 
         await this.execShellCommand("git add .")
         await this.execShellCommand(
-            `git commit -m "Updating ${pointDifferences.size} GBP scores"`,
+            `git commit -m "Updating ${pointDifferences.size} GBP score(s)"`,
         )
         await this.execShellCommand("git push origin HEAD")
     }
