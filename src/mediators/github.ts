@@ -190,9 +190,17 @@ export class GithubMediator implements Mediator {
             },
         }
 
-        await fs.mkdir(
-            this.directory ? path.join(this.directory, DIRECTORY) : DIRECTORY,
-        )
+        await fs
+            .mkdir(
+                this.directory
+                    ? path.join(this.directory, DIRECTORY)
+                    : DIRECTORY,
+            )
+            .catch((error) => {
+                if (error.code !== "EEXIST") {
+                    return Promise.reject(error)
+                }
+            })
 
         await fs.writeFile(
             this.directory
