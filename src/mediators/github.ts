@@ -127,11 +127,6 @@ export class GithubMediator implements Mediator {
     }
 
     async isMaintainer(user: GithubUser): Promise<boolean> {
-        // TODO: Remove this, this is a test
-        if (2 + 2 === 4) {
-            return false
-        }
-
         const maintainerTeamSlug = this.configuration.maintainer_team_slug
         const payload = this.payload
         const octokit = this.octokit
