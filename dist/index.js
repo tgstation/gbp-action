@@ -13608,7 +13608,15 @@ class GithubMediator {
                     login: user.login,
                 },
             };
-            yield fs_1.promises.mkdir(this.directory ? path_1.default.join(this.directory, DIRECTORY) : DIRECTORY);
+            yield fs_1.promises
+                .mkdir(this.directory
+                ? path_1.default.join(this.directory, DIRECTORY)
+                : DIRECTORY)
+                .catch((error) => {
+                if (error.code !== "EEXIST") {
+                    return Promise.reject(error);
+                }
+            });
             yield fs_1.promises.writeFile(this.directory
                 ? path_1.default.join(this.directory, getFilenameForId(id))
                 : getFilenameForId(id), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
