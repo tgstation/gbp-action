@@ -79,9 +79,11 @@ export class GithubMediator implements Mediator {
         const filenames = await fs.readdir(differencesDirectory)
 
         return Promise.all(
-            filenames.map((filename) =>
-                fs
-                    .open(path.join(differencesDirectory, filename), "r")
+            filenames.map((filename) => {
+                filename = path.join(differencesDirectory, filename)
+
+                return fs
+                    .open(filename, "r")
                     .then((file) => {
                         return file.readFile({
                             encoding: "utf-8",
@@ -103,10 +105,10 @@ export class GithubMediator implements Mediator {
                         core.error(
                             `${filename} was not in the right format! ${problem}`,
                         )
-                        await fs.rm(filename)
+                        await fs.unlink(filename)
                         return undefined
-                    }),
-            ),
+                    })
+            }),
         )
             .then(filterUndefined)
             .then((pointDifferences) => {
@@ -260,7 +262,7 @@ export class GithubMediator implements Mediator {
                 .then((filenames) => {
                     return Promise.all(
                         filenames.map((filename) =>
-                            fs.rm(this.joinDirectory(DIRECTORY, filename)),
+                            fs.unlink(this.joinDirectory(DIRECTORY, filename)),
                         ),
                     )
                 })
