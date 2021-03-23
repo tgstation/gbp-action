@@ -1,6 +1,9 @@
 name: 'GBP'
 description: 'Reward or take away points to contributors based on PR labels.'
 inputs:
+  collect:
+    description: 'Set to "true" if this run should collect the GBP together. This must be on a cron job.'
+    required: false
   directory:
     description: 'The directory the action will run from'
     required: false

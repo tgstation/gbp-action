@@ -1,5 +1,6 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
+import { collect } from "./actions/collect"
 import { merged } from "./actions/merged"
 import { opened } from "./actions/opened"
 import { readConfiguration } from "./configuration"
@@ -20,6 +21,15 @@ async function run() {
         github.context.payload,
         directory,
     )
+
+    if (
+        core.getInput("collect", {
+            required: false,
+        }) === "true"
+    ) {
+        return collect(mediator)
+    }
+
     const pullRequest = github.context.payload.pull_request as GithubPullRequest
 
     if (pullRequest === undefined) {
