@@ -185,8 +185,14 @@ export class GithubMediator implements Mediator {
             user,
         }
 
+        await fs.mkdir(
+            this.directory ? path.join(this.directory, DIRECTORY) : DIRECTORY,
+        )
+
         await fs.writeFile(
-            getFilenameForId(id),
+            this.directory
+                ? path.join(this.directory, getFilenameForId(id))
+                : getFilenameForId(id),
             JSON.stringify(pointDifferenceData),
             { encoding: "utf-8" },
         )
