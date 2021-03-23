@@ -44,6 +44,12 @@ const execShellCommand = (command: string, cwd?: string) => {
     })
 }
 
+const catchFileNotFound = (error: { code: unknown }) => {
+    if (error.code !== "EEXIST") {
+        return Promise.reject(error)
+    }
+}
+
 export class GithubMediator implements Mediator {
     configuration: Configuration
     directory?: string
@@ -191,11 +197,7 @@ export class GithubMediator implements Mediator {
                     ? path.join(this.directory, DIRECTORY)
                     : DIRECTORY,
             )
-            .catch((error) => {
-                if (error.code !== "EEXIST") {
-                    return Promise.reject(error)
-                }
-            })
+            .catch(catchFileNotFound)
 
         await fs.writeFile(
             this.directory
@@ -258,9 +260,18 @@ export class GithubMediator implements Mediator {
 
         await Promise.all([
             writeBalanceFile(balanceSheet, this.directory),
-            fs.readdir(DIRECTORY).then((filenames) => {
-                return Promise.all(filenames.map((filename) => fs.rm(filename)))
-            }),
+            fs
+                .readdir(
+                    this.directory
+                        ? path.join(this.directory, DIRECTORY)
+                        : DIRECTORY,
+                )
+                .then((filenames) => {
+                    return Promise.all(
+                        filenames.map((filename) => fs.rm(filename)),
+                    )
+                })
+                .catch(catchFileNotFound),
         ])
 
         await this.execShellCommand("git add .")
