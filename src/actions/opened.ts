@@ -13,7 +13,7 @@ export async function opened(
 ) {
     const octokit = github.getOctokit(core.getInput("token"))
 
-    if (mediator.isMaintainer(pullRequest.user)) {
+    if (await mediator.isMaintainer(pullRequest.user)) {
         core.info("Author is maintainer")
         return
     }
