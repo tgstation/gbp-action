@@ -13241,7 +13241,7 @@ function opened(configuration, mediator, pullRequest, basePath) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = github.getOctokit(core.getInput("token"));
-        if (mediator.isMaintainer(pullRequest.user)) {
+        if (yield mediator.isMaintainer(pullRequest.user)) {
             core.info("Author is maintainer");
             return;
         }
