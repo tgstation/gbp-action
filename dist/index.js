@@ -13583,16 +13583,24 @@ class GithubMediator {
             }))
                 .then(filterUndefined_1.filterUndefined)
                 .then((pointDifferences) => {
-                const pointDifferenceResult = new Map();
+                const pointDifferencesById = new Map();
                 // Track usernames separately in case someone changed username halfway through
                 const usernames = new Map();
                 for (const difference of Object.values(pointDifferences)) {
                     const user = difference.user;
-                    pointDifferenceResult.set(user.id, (pointDifferenceResult.get(user.id) || 0) +
+                    pointDifferencesById.set(user.id, (pointDifferencesById.get(user.id) || 0) +
                         difference.difference);
                     usernames.set(user.id, user.login);
                 }
-                return pointDifferenceResult;
+                return new Map([...pointDifferencesById.entries()].map(([userId, pointDifference]) => {
+                    return [
+                        {
+                            id: userId,
+                            login: usernames.get(userId),
+                        },
+                        pointDifference,
+                    ];
+                }));
             });
         });
     }
@@ -13702,7 +13710,7 @@ class GithubMediator {
                     .catch(catchFileNotFound),
             ]);
             yield this.execShellCommand("git add .");
-            yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP scores"`);
+            yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP score(s)"`);
             yield this.execShellCommand("git push origin HEAD");
         });
     }
