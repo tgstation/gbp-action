@@ -13534,6 +13534,11 @@ const execShellCommand = (command, cwd) => {
         });
     });
 };
+const catchFileNotFound = (error) => {
+    if (error.code !== "EEXIST") {
+        return Promise.reject(error);
+    }
+};
 class GithubMediator {
     constructor(configuration, payload, directory) {
         this.configuration = configuration;
@@ -13641,11 +13646,7 @@ class GithubMediator {
                 .mkdir(this.directory
                 ? path_1.default.join(this.directory, DIRECTORY)
                 : DIRECTORY)
-                .catch((error) => {
-                if (error.code !== "EEXIST") {
-                    return Promise.reject(error);
-                }
-            });
+                .catch(catchFileNotFound);
             yield fs_1.promises.writeFile(this.directory
                 ? path_1.default.join(this.directory, getFilenameForId(id))
                 : getFilenameForId(id), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
@@ -13692,9 +13693,14 @@ class GithubMediator {
             }
             yield Promise.all([
                 points_1.writeBalanceFile(balanceSheet, this.directory),
-                fs_1.promises.readdir(DIRECTORY).then((filenames) => {
+                fs_1.promises
+                    .readdir(this.directory
+                    ? path_1.default.join(this.directory, DIRECTORY)
+                    : DIRECTORY)
+                    .then((filenames) => {
                     return Promise.all(filenames.map((filename) => fs_1.promises.rm(filename)));
-                }),
+                })
+                    .catch(catchFileNotFound),
             ]);
             yield this.execShellCommand("git add .");
             yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP scores"`);
