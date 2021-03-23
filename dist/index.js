@@ -13604,7 +13604,10 @@ class GithubMediator {
                 difference: pointDifference,
                 user,
             };
-            yield fs_1.promises.writeFile(getFilenameForId(id), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
+            yield fs_1.promises.mkdir(this.directory ? path_1.default.join(this.directory, DIRECTORY) : DIRECTORY);
+            yield fs_1.promises.writeFile(this.directory
+                ? path_1.default.join(this.directory, getFilenameForId(id))
+                : getFilenameForId(id), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
             // This should never fail, but we're about to send it to a shell command, for pete's sake.
             if (typeof id !== "number") {
                 return Promise.reject(`Didn't get a numerical id: ${id}`);
