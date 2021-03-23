@@ -13165,7 +13165,7 @@ function merged(configuration, mediator, pullRequest, basePath) {
             balance = 0;
         }
         else {
-            const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
+            pointsReceived = points.getPointsFromLabels(configuration, labelNames);
             if (pointsReceived === 0) {
                 return;
             }
@@ -13602,7 +13602,11 @@ class GithubMediator {
         return __awaiter(this, void 0, void 0, function* () {
             const pointDifferenceData = {
                 difference: pointDifference,
-                user,
+                // Don't just pass in `user`, since there's a lot more than just these two fields
+                user: {
+                    id: user.id,
+                    login: user.login,
+                },
             };
             yield fs_1.promises.mkdir(this.directory ? path_1.default.join(this.directory, DIRECTORY) : DIRECTORY);
             yield fs_1.promises.writeFile(this.directory
