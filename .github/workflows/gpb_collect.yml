@@ -1,7 +1,7 @@
 name: GBP Collection
 on:
   schedule:
-    - cron: "*/1 * * * *"
+    - cron: "*/5 * * * *"
 jobs:
   gbp_collection:
     runs-on: ubuntu-latest
