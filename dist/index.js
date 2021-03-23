@@ -13489,9 +13489,9 @@ const pointDifferenceSchema = t.interface({
 });
 const DIRECTORY = "point-differences";
 const getFilenameForId = (id) => `${DIRECTORY}/${id}.json`;
-const execShellCommand = (command) => {
+const execShellCommand = (command, cwd) => {
     return new Promise((resolve, reject) => {
-        child_process_1.exec(command, (error, stdout) => {
+        child_process_1.exec(command, { cwd }, (error, stdout) => {
             if (error) {
                 reject(error);
             }
@@ -13507,6 +13507,9 @@ class GithubMediator {
         this.directory = directory;
         this.payload = payload;
         this.octokit = github.getOctokit(core.getInput("token"));
+    }
+    execShellCommand(command) {
+        return execShellCommand(command, this.directory);
     }
     getPointDifferences() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -13554,6 +13557,10 @@ class GithubMediator {
     isMaintainer(user) {
         var _a, _b, _c, _d, _e, _f;
         return __awaiter(this, void 0, void 0, function* () {
+            // TODO: Remove this, this is a test
+            if (true) {
+                return false;
+            }
             const maintainerTeamSlug = this.configuration.maintainer_team_slug;
             const payload = this.payload;
             const octokit = this.octokit;
@@ -13603,9 +13610,9 @@ class GithubMediator {
                 return Promise.reject(`Didn't get a numerical id: ${id}`);
             }
             // Highway to the danger zone!
-            yield execShellCommand(`git add ${DIRECTORY}`);
-            yield execShellCommand(`git commit -m "Updating GBP balance for #${id}"`);
-            yield execShellCommand("git push origin HEAD");
+            yield this.execShellCommand(`git add ${DIRECTORY}`);
+            yield this.execShellCommand(`git commit -m "Updating GBP balance for #${id}"`);
+            yield this.execShellCommand("git push origin HEAD");
         });
     }
     postComment(comment) {
@@ -13645,9 +13652,9 @@ class GithubMediator {
                     return Promise.all(filenames.map((filename) => fs_1.promises.rm(filename)));
                 }),
             ]);
-            yield execShellCommand("git add .");
-            yield execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP scores"`);
-            yield execShellCommand("git push origin HEAD");
+            yield this.execShellCommand("git add .");
+            yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP scores"`);
+            yield this.execShellCommand("git push origin HEAD");
         });
     }
 }
