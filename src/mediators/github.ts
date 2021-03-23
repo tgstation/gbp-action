@@ -112,24 +112,36 @@ export class GithubMediator implements Mediator {
         )
             .then(filterUndefined)
             .then((pointDifferences) => {
-                const pointDifferenceResult = new Map()
+                const pointDifferencesById = new Map<number, number>()
 
                 // Track usernames separately in case someone changed username halfway through
-                const usernames = new Map()
+                const usernames = new Map<number, string>()
 
                 for (const difference of Object.values(pointDifferences)) {
                     const user: GithubUser = difference.user
 
-                    pointDifferenceResult.set(
+                    pointDifferencesById.set(
                         user.id,
-                        (pointDifferenceResult.get(user.id) || 0) +
+                        (pointDifferencesById.get(user.id) || 0) +
                             difference.difference,
                     )
 
                     usernames.set(user.id, user.login)
                 }
 
-                return pointDifferenceResult
+                return new Map(
+                    [...pointDifferencesById.entries()].map(
+                        ([userId, pointDifference]) => {
+                            return [
+                                {
+                                    id: userId,
+                                    login: usernames.get(userId)!,
+                                },
+                                pointDifference,
+                            ]
+                        },
+                    ),
+                )
             })
     }
 
