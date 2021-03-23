@@ -45,8 +45,10 @@ const execShellCommand = (command: string, cwd?: string) => {
 }
 
 const catchFileNotFound = (error: { code: unknown }) => {
-    if (error.code !== "EEXIST") {
+    if (error.code !== "EEXIST" && error.code !== "ENOENT") {
         return Promise.reject(error)
+    } else {
+        return Promise.resolve()
     }
 }
 
@@ -73,12 +75,13 @@ export class GithubMediator implements Mediator {
     }
 
     async getPointDifferences(): Promise<Map<GithubUser, number>> {
-        const filenames = await fs.readdir(DIRECTORY)
+        const differencesDirectory = this.joinDirectory(DIRECTORY)
+        const filenames = await fs.readdir(differencesDirectory)
 
         return Promise.all(
             filenames.map((filename) =>
                 fs
-                    .open(path.join(DIRECTORY, filename), "r")
+                    .open(path.join(differencesDirectory, filename), "r")
                     .then((file) => {
                         return file.readFile({
                             encoding: "utf-8",
@@ -191,18 +194,10 @@ export class GithubMediator implements Mediator {
             },
         }
 
-        await fs
-            .mkdir(
-                this.directory
-                    ? path.join(this.directory, DIRECTORY)
-                    : DIRECTORY,
-            )
-            .catch(catchFileNotFound)
+        await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
         await fs.writeFile(
-            this.directory
-                ? path.join(this.directory, getFilenameForId(id))
-                : getFilenameForId(id),
+            this.joinDirectory(getFilenameForId(id)),
             JSON.stringify(pointDifferenceData),
             { encoding: "utf-8" },
         )
@@ -261,14 +256,12 @@ export class GithubMediator implements Mediator {
         await Promise.all([
             writeBalanceFile(balanceSheet, this.directory),
             fs
-                .readdir(
-                    this.directory
-                        ? path.join(this.directory, DIRECTORY)
-                        : DIRECTORY,
-                )
+                .readdir(this.joinDirectory(DIRECTORY))
                 .then((filenames) => {
                     return Promise.all(
-                        filenames.map((filename) => fs.rm(filename)),
+                        filenames.map((filename) =>
+                            fs.rm(this.joinDirectory(DIRECTORY, filename)),
+                        ),
                     )
                 })
                 .catch(catchFileNotFound),
@@ -279,5 +272,11 @@ export class GithubMediator implements Mediator {
             `git commit -m "Updating ${pointDifferences.size} GBP scores"`,
         )
         await this.execShellCommand("git push origin HEAD")
+    }
+
+    joinDirectory(...paths: string[]): string {
+        return this.directory
+            ? path.join(this.directory, ...paths)
+            : path.join(...paths)
     }
 }
