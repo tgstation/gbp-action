@@ -30,10 +30,7 @@ export async function merged(
     ) {
         balance = 0
     } else {
-        const pointsReceived = points.getPointsFromLabels(
-            configuration,
-            labelNames,
-        )
+        pointsReceived = points.getPointsFromLabels(configuration, labelNames)
 
         if (pointsReceived === 0) {
             return

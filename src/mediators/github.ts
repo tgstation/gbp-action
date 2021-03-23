@@ -182,7 +182,12 @@ export class GithubMediator implements Mediator {
     ) {
         const pointDifferenceData: t.TypeOf<typeof pointDifferenceSchema> = {
             difference: pointDifference,
-            user,
+
+            // Don't just pass in `user`, since there's a lot more than just these two fields
+            user: {
+                id: user.id,
+                login: user.login,
+            },
         }
 
         await fs.mkdir(
