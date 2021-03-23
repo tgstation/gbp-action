@@ -95,3 +95,9 @@ export function setBalance(
 
     return `${tomlOutput}\n${balanceLine}`
 }
+
+export async function writeBalanceFile(contents: string) {
+    return fs.writeFile("./.github/gbp-balances.toml", contents, {
+        encoding: "utf-8",
+    })
+}
