@@ -1,6 +1,9 @@
 name: 'GBP'
 description: 'Reward or take away points to contributors based on PR labels.'
 inputs:
+  directory:
+    description: 'The directory the action will run from'
+    required: false
   token:
     description: 'Token to authorize commits and comments under'
     required: true

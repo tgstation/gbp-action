@@ -32,9 +32,9 @@ const DIRECTORY = "point-differences"
 const getFilenameForId = (id: PullRequestId): string =>
     `${DIRECTORY}/${id}.json`
 
-const execShellCommand = (command: string) => {
+const execShellCommand = (command: string, cwd?: string) => {
     return new Promise((resolve, reject) => {
-        exec(command, (error, stdout) => {
+        exec(command, { cwd }, (error, stdout) => {
             if (error) {
                 reject(error)
             } else {
@@ -60,6 +60,10 @@ export class GithubMediator implements Mediator {
         this.payload = payload
 
         this.octokit = github.getOctokit(core.getInput("token"))
+    }
+
+    execShellCommand(command: string) {
+        return execShellCommand(command, this.directory)
     }
 
     async getPointDifferences(): Promise<Map<GithubUser, number>> {
@@ -123,6 +127,11 @@ export class GithubMediator implements Mediator {
     }
 
     async isMaintainer(user: GithubUser): Promise<boolean> {
+        // TODO: Remove this, this is a test
+        if (2 + 2 === 4) {
+            return false
+        }
+
         const maintainerTeamSlug = this.configuration.maintainer_team_slug
         const payload = this.payload
         const octokit = this.octokit
@@ -188,11 +197,11 @@ export class GithubMediator implements Mediator {
         }
 
         // Highway to the danger zone!
-        await execShellCommand(`git add ${DIRECTORY}`)
-        await execShellCommand(
+        await this.execShellCommand(`git add ${DIRECTORY}`)
+        await this.execShellCommand(
             `git commit -m "Updating GBP balance for #${id}"`,
         )
-        await execShellCommand("git push origin HEAD")
+        await this.execShellCommand("git push origin HEAD")
     }
 
     async postComment(comment: string) {
@@ -240,10 +249,10 @@ export class GithubMediator implements Mediator {
             }),
         ])
 
-        await execShellCommand("git add .")
-        await execShellCommand(
+        await this.execShellCommand("git add .")
+        await this.execShellCommand(
             `git commit -m "Updating ${pointDifferences.size} GBP scores"`,
         )
-        await execShellCommand("git push origin HEAD")
+        await this.execShellCommand("git push origin HEAD")
     }
 }
