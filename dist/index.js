@@ -13556,28 +13556,31 @@ class GithubMediator {
         return __awaiter(this, void 0, void 0, function* () {
             const differencesDirectory = this.joinDirectory(DIRECTORY);
             const filenames = yield fs_1.promises.readdir(differencesDirectory);
-            return Promise.all(filenames.map((filename) => fs_1.promises
-                .open(path_1.default.join(differencesDirectory, filename), "r")
-                .then((file) => {
-                return file.readFile({
-                    encoding: "utf-8",
-                });
-            })
-                .then(JSON.parse)
-                .then((contentObject) => {
-                const valueEither = pointDifferenceSchema.decode(contentObject);
-                if (Either_1.isRight(valueEither)) {
-                    return valueEither.right;
-                }
-                else {
-                    throw valueEither.left;
-                }
-            })
-                .catch((problem) => __awaiter(this, void 0, void 0, function* () {
-                core.error(`${filename} was not in the right format! ${problem}`);
-                yield fs_1.promises.rm(filename);
-                return undefined;
-            }))))
+            return Promise.all(filenames.map((filename) => {
+                filename = path_1.default.join(differencesDirectory, filename);
+                return fs_1.promises
+                    .open(filename, "r")
+                    .then((file) => {
+                    return file.readFile({
+                        encoding: "utf-8",
+                    });
+                })
+                    .then(JSON.parse)
+                    .then((contentObject) => {
+                    const valueEither = pointDifferenceSchema.decode(contentObject);
+                    if (Either_1.isRight(valueEither)) {
+                        return valueEither.right;
+                    }
+                    else {
+                        throw valueEither.left;
+                    }
+                })
+                    .catch((problem) => __awaiter(this, void 0, void 0, function* () {
+                    core.error(`${filename} was not in the right format! ${problem}`);
+                    yield fs_1.promises.unlink(filename);
+                    return undefined;
+                }));
+            }))
                 .then(filterUndefined_1.filterUndefined)
                 .then((pointDifferences) => {
                 const pointDifferenceResult = new Map();
@@ -13694,7 +13697,7 @@ class GithubMediator {
                 fs_1.promises
                     .readdir(this.joinDirectory(DIRECTORY))
                     .then((filenames) => {
-                    return Promise.all(filenames.map((filename) => fs_1.promises.rm(this.joinDirectory(DIRECTORY, filename))));
+                    return Promise.all(filenames.map((filename) => fs_1.promises.unlink(this.joinDirectory(DIRECTORY, filename))));
                 })
                     .catch(catchFileNotFound),
             ]);
