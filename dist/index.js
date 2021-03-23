@@ -13535,8 +13535,11 @@ const execShellCommand = (command, cwd) => {
     });
 };
 const catchFileNotFound = (error) => {
-    if (error.code !== "EEXIST") {
+    if (error.code !== "EEXIST" && error.code !== "ENOENT") {
         return Promise.reject(error);
+    }
+    else {
+        return Promise.resolve();
     }
 };
 class GithubMediator {
@@ -13551,9 +13554,10 @@ class GithubMediator {
     }
     getPointDifferences() {
         return __awaiter(this, void 0, void 0, function* () {
-            const filenames = yield fs_1.promises.readdir(DIRECTORY);
+            const differencesDirectory = this.joinDirectory(DIRECTORY);
+            const filenames = yield fs_1.promises.readdir(differencesDirectory);
             return Promise.all(filenames.map((filename) => fs_1.promises
-                .open(path_1.default.join(DIRECTORY, filename), "r")
+                .open(path_1.default.join(differencesDirectory, filename), "r")
                 .then((file) => {
                 return file.readFile({
                     encoding: "utf-8",
@@ -13642,14 +13646,8 @@ class GithubMediator {
                     login: user.login,
                 },
             };
-            yield fs_1.promises
-                .mkdir(this.directory
-                ? path_1.default.join(this.directory, DIRECTORY)
-                : DIRECTORY)
-                .catch(catchFileNotFound);
-            yield fs_1.promises.writeFile(this.directory
-                ? path_1.default.join(this.directory, getFilenameForId(id))
-                : getFilenameForId(id), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
+            yield fs_1.promises.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound);
+            yield fs_1.promises.writeFile(this.joinDirectory(getFilenameForId(id)), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
             // This should never fail, but we're about to send it to a shell command, for pete's sake.
             if (typeof id !== "number") {
                 return Promise.reject(`Didn't get a numerical id: ${id}`);
@@ -13694,11 +13692,9 @@ class GithubMediator {
             yield Promise.all([
                 points_1.writeBalanceFile(balanceSheet, this.directory),
                 fs_1.promises
-                    .readdir(this.directory
-                    ? path_1.default.join(this.directory, DIRECTORY)
-                    : DIRECTORY)
+                    .readdir(this.joinDirectory(DIRECTORY))
                     .then((filenames) => {
-                    return Promise.all(filenames.map((filename) => fs_1.promises.rm(filename)));
+                    return Promise.all(filenames.map((filename) => fs_1.promises.rm(this.joinDirectory(DIRECTORY, filename))));
                 })
                     .catch(catchFileNotFound),
             ]);
@@ -13706,6 +13702,11 @@ class GithubMediator {
             yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP scores"`);
             yield this.execShellCommand("git push origin HEAD");
         });
+    }
+    joinDirectory(...paths) {
+        return this.directory
+            ? path_1.default.join(this.directory, ...paths)
+            : path_1.default.join(...paths);
     }
 }
 exports.GithubMediator = GithubMediator;
