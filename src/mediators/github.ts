@@ -46,14 +46,17 @@ const execShellCommand = (command: string) => {
 
 export class GithubMediator implements Mediator {
     configuration: Configuration
+    directory?: string
     octokit: ReturnType<typeof getOctokit>
     payload: typeof github.context.payload
 
     constructor(
         configuration: Configuration,
         payload: typeof github.context.payload,
+        directory?: string,
     ) {
         this.configuration = configuration
+        this.directory = directory
         this.payload = payload
 
         this.octokit = github.getOctokit(core.getInput("token"))
@@ -207,7 +210,7 @@ export class GithubMediator implements Mediator {
             return
         }
 
-        let balanceSheet = await readBalanceFile()
+        let balanceSheet = await readBalanceFile(this.directory)
         const balances = balanceSheet ? readBalances(balanceSheet) : {}
 
         for (const [user, points] of pointDifferences.entries()) {
@@ -231,7 +234,7 @@ export class GithubMediator implements Mediator {
         }
 
         await Promise.all([
-            writeBalanceFile(balanceSheet),
+            writeBalanceFile(balanceSheet, this.directory),
             fs.readdir(DIRECTORY).then((filenames) => {
                 return Promise.all(filenames.map((filename) => fs.rm(filename)))
             }),

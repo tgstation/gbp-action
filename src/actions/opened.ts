@@ -9,6 +9,7 @@ export async function opened(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
+    basePath?: string,
 ) {
     const octokit = github.getOctokit(core.getInput("token"))
 
@@ -17,7 +18,7 @@ export async function opened(
         return
     }
 
-    const balanceSheet = await points.readBalanceFile()
+    const balanceSheet = await points.readBalanceFile(basePath)
     const userBalance =
         (balanceSheet &&
             points.readBalances(balanceSheet)[pullRequest.user.id]) ||

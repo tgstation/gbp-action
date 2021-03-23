@@ -7,6 +7,7 @@ export async function merged(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
+    basePath?: string,
 ) {
     if (!pullRequest.merged) {
         mediator.info("Pull request was closed, not merged.")
@@ -16,7 +17,7 @@ export async function merged(
     const { labels, user } = pullRequest
     const labelNames = labels.map((label) => label.name)
 
-    const balanceSheet = await points.readBalanceFile()
+    const balanceSheet = await points.readBalanceFile(basePath)
     const oldBalance =
         (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
 
