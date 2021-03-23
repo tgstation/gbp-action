@@ -13590,10 +13590,6 @@ class GithubMediator {
     isMaintainer(user) {
         var _a, _b, _c, _d, _e, _f;
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO: Remove this, this is a test
-            if (true) {
-                return false;
-            }
             const maintainerTeamSlug = this.configuration.maintainer_team_slug;
             const payload = this.payload;
             const octokit = this.octokit;
