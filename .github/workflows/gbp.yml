@@ -20,7 +20,7 @@ jobs:
     # This is to ensure we keep the gbp.toml from master
     # without having to update our separate branch.
     - name: Copy configuration
-      run: cp ./.github/gbp.toml ./.github/gbp-balances/gbp.toml
+      run: cp ./.github/gbp.toml ./gbp-balances/.github/gbp.toml
     - name: GBP action
       uses: ./
       with:
