@@ -1,7 +1,10 @@
 name: GBP Collection
 on:
-  issue_comment:
-    types: [created, deleted]
+  schedule:
+  - cron: "20 * * * *"
+# on:
+#   issue_comment:
+#     types: [created, deleted]
 jobs:
   gbp_collection:
     runs-on: ubuntu-latest
