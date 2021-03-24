@@ -33,7 +33,6 @@ async function run() {
     const pullRequest = github.context.payload.pull_request as GithubPullRequest
 
     if (pullRequest === undefined) {
-        // TODO: cron task
         return Promise.reject("No pull request detected.")
     }
 
