@@ -210,23 +210,13 @@ export class GithubMediator implements Mediator {
 
         await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
-        await fs.writeFile(
-            this.joinDirectory(getFilenameForId(id)),
-            JSON.stringify(pointDifferenceData),
-            { encoding: "utf-8" },
-        )
-
-        // This should never fail, but we're about to send it to a shell command, for pete's sake.
-        if (typeof id !== "number") {
-            return Promise.reject(`Didn't get a numerical id: ${id}`)
-        }
-
-        // Highway to the danger zone!
-        await this.execShellCommand(`git add ${DIRECTORY}`)
-        await this.execShellCommand(
-            `git commit -m "Updating GBP balance for #${id}"`,
-        )
-        await this.execShellCommand("git push origin HEAD")
+        this.octokit.repos.createOrUpdateFileContents({
+            content: JSON.stringify(pointDifferenceData),
+            owner: github.context.payload.repository?.owner?.login!,
+            repo: github.context.payload.repository?.name!,
+            message: `Updating GBP balances for #${id}`,
+            path: getFilenameForId(id),
+        })
     }
 
     async postComment(comment: string) {
