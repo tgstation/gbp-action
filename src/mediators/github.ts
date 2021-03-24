@@ -211,6 +211,9 @@ export class GithubMediator implements Mediator {
         await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
         this.octokit.repos.createOrUpdateFileContents({
+            branch: core.getInput("branch", {
+                required: false,
+            }),
             content: Buffer.from(JSON.stringify(pointDifferenceData)).toString(
                 "base64",
             ),

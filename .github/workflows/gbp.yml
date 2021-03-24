@@ -24,5 +24,6 @@ jobs:
     - name: GBP action
       uses: ./
       with:
+        branch: "gbp-balances"
         directory: ./gbp-balances
         token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,11 @@
 name: 'GBP'
 description: 'Reward or take away points to contributors based on PR labels.'
 inputs:
+  branch:
+    description: |
+      The branch to create the GBP patches on.
+      This is ONLY used for creating the patches, you will still need to checkout the branch you want to use.
+    required: false
   collect:
     description: 'Set to "true" if this run should collect the GBP together. This must be on a cron job.'
     required: false
