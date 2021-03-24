@@ -13660,7 +13660,7 @@ class GithubMediator {
             };
             yield fs_1.promises.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound);
             this.octokit.repos.createOrUpdateFileContents({
-                content: JSON.stringify(pointDifferenceData),
+                content: Buffer.from(JSON.stringify(pointDifferenceData)).toString("base64"),
                 owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
                 repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
                 message: `Updating GBP balances for #${id}`,
