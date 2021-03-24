@@ -211,7 +211,9 @@ export class GithubMediator implements Mediator {
         await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
         this.octokit.repos.createOrUpdateFileContents({
-            content: JSON.stringify(pointDifferenceData),
+            content: Buffer.from(JSON.stringify(pointDifferenceData)).toString(
+                "base64",
+            ),
             owner: github.context.payload.repository?.owner?.login!,
             repo: github.context.payload.repository?.name!,
             message: `Updating GBP balances for #${id}`,
