@@ -13648,6 +13648,7 @@ class GithubMediator {
         });
     }
     newPointDifference(id, user, pointDifference) {
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             const pointDifferenceData = {
                 difference: pointDifference,
@@ -13658,15 +13659,13 @@ class GithubMediator {
                 },
             };
             yield fs_1.promises.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound);
-            yield fs_1.promises.writeFile(this.joinDirectory(getFilenameForId(id)), JSON.stringify(pointDifferenceData), { encoding: "utf-8" });
-            // This should never fail, but we're about to send it to a shell command, for pete's sake.
-            if (typeof id !== "number") {
-                return Promise.reject(`Didn't get a numerical id: ${id}`);
-            }
-            // Highway to the danger zone!
-            yield this.execShellCommand(`git add ${DIRECTORY}`);
-            yield this.execShellCommand(`git commit -m "Updating GBP balance for #${id}"`);
-            yield this.execShellCommand("git push origin HEAD");
+            this.octokit.repos.createOrUpdateFileContents({
+                content: JSON.stringify(pointDifferenceData),
+                owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+                repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+                message: `Updating GBP balances for #${id}`,
+                path: getFilenameForId(id),
+            });
         });
     }
     postComment(comment) {
