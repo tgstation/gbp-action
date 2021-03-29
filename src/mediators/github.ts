@@ -44,13 +44,17 @@ const execShellCommand = (command: string, cwd?: string) => {
     })
 }
 
-const catchFileNotFound = (error: { code: unknown }) => {
-    if (error.code !== "EEXIST" && error.code !== "ENOENT") {
-        return Promise.reject(error)
-    } else {
-        return Promise.resolve()
+const createCatchFileNotFound = <T>(value: T) => {
+    return (error: { code: unknown }) => {
+        if (error.code !== "EEXIST" && error.code !== "ENOENT") {
+            return Promise.reject(error)
+        } else {
+            return Promise.resolve(value)
+        }
     }
 }
+
+const catchFileNotFound = createCatchFileNotFound(undefined)
 
 export class GithubMediator implements Mediator {
     configuration: Configuration
@@ -76,7 +80,9 @@ export class GithubMediator implements Mediator {
 
     async getPointDifferences(): Promise<Map<GithubUser, number>> {
         const differencesDirectory = this.joinDirectory(DIRECTORY)
-        const filenames = await fs.readdir(differencesDirectory)
+        const filenames = await fs
+            .readdir(differencesDirectory)
+            .catch(createCatchFileNotFound<string[]>([]))
 
         return Promise.all(
             filenames.map((filename) => {

@@ -13445,7 +13445,6 @@ function run() {
         }
         const pullRequest = github.context.payload.pull_request;
         if (pullRequest === undefined) {
-            // TODO: cron task
             return Promise.reject("No pull request detected.");
         }
         switch (github.context.payload.action) {
@@ -13534,14 +13533,17 @@ const execShellCommand = (command, cwd) => {
         });
     });
 };
-const catchFileNotFound = (error) => {
-    if (error.code !== "EEXIST" && error.code !== "ENOENT") {
-        return Promise.reject(error);
-    }
-    else {
-        return Promise.resolve();
-    }
+const createCatchFileNotFound = (value) => {
+    return (error) => {
+        if (error.code !== "EEXIST" && error.code !== "ENOENT") {
+            return Promise.reject(error);
+        }
+        else {
+            return Promise.resolve(value);
+        }
+    };
 };
+const catchFileNotFound = createCatchFileNotFound(undefined);
 class GithubMediator {
     constructor(configuration, payload, directory) {
         this.configuration = configuration;
@@ -13555,7 +13557,9 @@ class GithubMediator {
     getPointDifferences() {
         return __awaiter(this, void 0, void 0, function* () {
             const differencesDirectory = this.joinDirectory(DIRECTORY);
-            const filenames = yield fs_1.promises.readdir(differencesDirectory);
+            const filenames = yield fs_1.promises
+                .readdir(differencesDirectory)
+                .catch(createCatchFileNotFound([]));
             return Promise.all(filenames.map((filename) => {
                 filename = path_1.default.join(differencesDirectory, filename);
                 return fs_1.promises
