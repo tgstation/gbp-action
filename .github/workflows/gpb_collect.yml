@@ -1,9 +1,12 @@
-name: GBP
+name: GBP Collection
 on:
-  pull_request_target:
-    types: [closed, opened]
+  schedule:
+  - cron: "20 * * * *"
+# on:
+#   issue_comment:
+#     types: [created, deleted]
 jobs:
-  gbp:
+  gbp_collection:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -24,6 +27,6 @@ jobs:
     - name: GBP action
       uses: ./
       with:
-        branch: "gbp-balances"
+        collect: "true"
         directory: ./gbp-balances
         token: ${{ secrets.GITHUB_TOKEN }}

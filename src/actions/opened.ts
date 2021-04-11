@@ -1,34 +1,28 @@
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { Configuration } from "../configuration"
-import { GithubLabel, GithubUser } from "../github"
-import { isMaintainer } from "../isMaintainer"
+import { GithubLabel, GithubPullRequest } from "../github"
+import { Mediator } from "../mediators/mediator"
 import * as points from "../points"
 
-export async function opened(configuration: Configuration) {
-    const pullRequest = github.context.payload.pull_request
-    if (pullRequest === undefined) {
-        return Promise.reject(`No pull request was provided.`)
-    }
-
+export async function opened(
+    configuration: Configuration,
+    mediator: Mediator,
+    pullRequest: GithubPullRequest,
+    basePath?: string,
+) {
     const octokit = github.getOctokit(core.getInput("token"))
 
-    const user: GithubUser = pullRequest.user
-    if (
-        await isMaintainer(
-            octokit,
-            configuration.maintainer_team_slug,
-            github.context.payload,
-            user,
-        )
-    ) {
+    if (await mediator.isMaintainer(pullRequest.user)) {
         core.info("Author is maintainer")
         return
     }
 
-    const balanceSheet = await points.readBalanceFile()
+    const balanceSheet = await points.readBalanceFile(basePath)
     const userBalance =
-        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+        (balanceSheet &&
+            points.readBalances(balanceSheet)[pullRequest.user.id]) ||
+        0
 
     const labels: GithubLabel[] = pullRequest.labels
     const labelNames = labels.map((label) => label.name)

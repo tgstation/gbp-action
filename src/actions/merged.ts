@@ -1,27 +1,23 @@
-import * as core from "@actions/core"
-import * as github from "@actions/github"
-import * as toml from "toml"
-import { isMaintainer } from "../isMaintainer"
-import { GithubLabel, GithubUser } from "../github"
+import { GithubPullRequest } from "../github"
 import * as points from "../points"
 import { Configuration } from "../configuration"
+import { Mediator } from "../mediators/mediator"
 
-export async function merged(configuration: Configuration) {
-    const pullRequest = github.context.payload.pull_request
-    if (pullRequest === undefined) {
-        return Promise.reject(`No pull request was provided.`)
-    }
-
+export async function merged(
+    configuration: Configuration,
+    mediator: Mediator,
+    pullRequest: GithubPullRequest,
+    basePath?: string,
+) {
     if (!pullRequest.merged) {
-        core.info("Pull request was closed, not merged.")
+        mediator.info("Pull request was closed, not merged.")
         return
     }
 
-    const labels: GithubLabel[] = pullRequest.labels
+    const { labels, user } = pullRequest
     const labelNames = labels.map((label) => label.name)
-    const user: GithubUser = pullRequest.user
 
-    const balanceSheet = await points.readBalanceFile()
+    const balanceSheet = await points.readBalanceFile(basePath)
     const oldBalance =
         (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
 
@@ -34,61 +30,19 @@ export async function merged(configuration: Configuration) {
     ) {
         balance = 0
     } else {
-        const pointsReceived = points.getPointsFromLabels(
-            configuration,
-            labelNames,
-        )
-        balance = oldBalance + pointsReceived
+        pointsReceived = points.getPointsFromLabels(configuration, labelNames)
 
         if (pointsReceived === 0) {
             return
         }
+
+        balance = oldBalance + pointsReceived
     }
 
-    const newOutput = points.setBalance(balanceSheet, user, balance)
-    try {
-        toml.parse(newOutput)
-    } catch {
-        return Promise.reject(
-            `setBalance resulted in invalid output: ${newOutput}`,
-        )
-    }
+    mediator.newPointDifference(pullRequest.number, user, pointsReceived)
 
-    const octokit = github.getOctokit(core.getInput("token"))
-
-    const fileContentsParams = {
-        owner: github.context.payload.repository?.owner?.login!,
-        repo: github.context.payload.repository?.name!,
-        path: ".github/gbp-balances.toml",
-    }
-
-    const sha = await octokit.repos
-        .getContent(fileContentsParams)
-        .then((contents) => {
-            const data = contents.data
-            return Array.isArray(data) ? undefined : data.sha
-        })
-        .catch(() => {
-            // Most likely 404
-            return undefined
-        })
-
-    await octokit.repos.createOrUpdateFileContents({
-        ...fileContentsParams,
-        message: `Updating GBP from PR #${pullRequest.number} [ci skip]`,
-        content: Buffer.from(newOutput, "binary").toString("base64"),
-        sha,
-    })
-
-    if (
-        await isMaintainer(
-            octokit,
-            configuration.maintainer_team_slug,
-            github.context.payload,
-            user,
-        )
-    ) {
-        core.info("Author is maintainer")
+    if (await mediator.isMaintainer(pullRequest.user)) {
+        mediator.info("Author is maintainer")
         return
     }
 
@@ -107,11 +61,6 @@ export async function merged(configuration: Configuration) {
     }
 
     if (comment !== undefined) {
-        await octokit.issues.createComment({
-            owner: github.context.payload.repository?.owner?.login!,
-            repo: github.context.payload.repository?.name!,
-            issue_number: pullRequest.number,
-            body: comment,
-        })
+        await mediator.postComment(comment)
     }
 }

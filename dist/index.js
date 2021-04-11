@@ -13112,6 +13112,33 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 3295:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collect = void 0;
+function collect(mediator) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pointDifferences = yield mediator.getPointDifferences();
+        return mediator.writePointDifferences(pointDifferences);
+    });
+}
+exports.collect = collect;
+
+
+/***/ }),
+
 /***/ 1268:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -13147,26 +13174,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.merged = void 0;
-const core = __importStar(__nccwpck_require__(3923));
-const github = __importStar(__nccwpck_require__(5873));
-const toml = __importStar(__nccwpck_require__(8830));
-const isMaintainer_1 = __nccwpck_require__(7470);
 const points = __importStar(__nccwpck_require__(5474));
-function merged(configuration) {
-    var _a, _b, _c, _d, _e, _f;
+function merged(configuration, mediator, pullRequest, basePath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const pullRequest = github.context.payload.pull_request;
-        if (pullRequest === undefined) {
-            return Promise.reject(`No pull request was provided.`);
-        }
         if (!pullRequest.merged) {
-            core.info("Pull request was closed, not merged.");
+            mediator.info("Pull request was closed, not merged.");
             return;
         }
-        const labels = pullRequest.labels;
+        const { labels, user } = pullRequest;
         const labelNames = labels.map((label) => label.name);
-        const user = pullRequest.user;
-        const balanceSheet = yield points.readBalanceFile();
+        const balanceSheet = yield points.readBalanceFile(basePath);
         const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
         let balance;
         let pointsReceived = 0;
@@ -13175,38 +13192,15 @@ function merged(configuration) {
             balance = 0;
         }
         else {
-            const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
-            balance = oldBalance + pointsReceived;
+            pointsReceived = points.getPointsFromLabels(configuration, labelNames);
             if (pointsReceived === 0) {
                 return;
             }
+            balance = oldBalance + pointsReceived;
         }
-        const newOutput = points.setBalance(balanceSheet, user, balance);
-        try {
-            toml.parse(newOutput);
-        }
-        catch (_g) {
-            return Promise.reject(`setBalance resulted in invalid output: ${newOutput}`);
-        }
-        const octokit = github.getOctokit(core.getInput("token"));
-        const fileContentsParams = {
-            owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
-            repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
-            path: ".github/gbp-balances.toml",
-        };
-        const sha = yield octokit.repos
-            .getContent(fileContentsParams)
-            .then((contents) => {
-            const data = contents.data;
-            return Array.isArray(data) ? undefined : data.sha;
-        })
-            .catch(() => {
-            // Most likely 404
-            return undefined;
-        });
-        yield octokit.repos.createOrUpdateFileContents(Object.assign(Object.assign({}, fileContentsParams), { message: `Updating GBP from PR #${pullRequest.number} [ci skip]`, content: Buffer.from(newOutput, "binary").toString("base64"), sha }));
-        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
-            core.info("Author is maintainer");
+        mediator.newPointDifference(pullRequest.number, user, pointsReceived);
+        if (yield mediator.isMaintainer(pullRequest.user)) {
+            mediator.info("Author is maintainer");
             return;
         }
         // Only send comment after its ensured the GBP is saved
@@ -13223,12 +13217,7 @@ function merged(configuration) {
                     "Fixing issues or helping to improve the codebase will raise this score.";
         }
         if (comment !== undefined) {
-            yield octokit.issues.createComment({
-                owner: (_e = (_d = github.context.payload.repository) === null || _d === void 0 ? void 0 : _d.owner) === null || _e === void 0 ? void 0 : _e.login,
-                repo: (_f = github.context.payload.repository) === null || _f === void 0 ? void 0 : _f.name,
-                issue_number: pullRequest.number,
-                body: comment,
-            });
+            yield mediator.postComment(comment);
         }
     });
 }
@@ -13274,23 +13263,19 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.opened = void 0;
 const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
-const isMaintainer_1 = __nccwpck_require__(7470);
 const points = __importStar(__nccwpck_require__(5474));
-function opened(configuration) {
+function opened(configuration, mediator, pullRequest, basePath) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
-        const pullRequest = github.context.payload.pull_request;
-        if (pullRequest === undefined) {
-            return Promise.reject(`No pull request was provided.`);
-        }
         const octokit = github.getOctokit(core.getInput("token"));
-        const user = pullRequest.user;
-        if (yield isMaintainer_1.isMaintainer(octokit, configuration.maintainer_team_slug, github.context.payload, user)) {
+        if (yield mediator.isMaintainer(pullRequest.user)) {
             core.info("Author is maintainer");
             return;
         }
-        const balanceSheet = yield points.readBalanceFile();
-        const userBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
+        const balanceSheet = yield points.readBalanceFile(basePath);
+        const userBalance = (balanceSheet &&
+            points.readBalances(balanceSheet)[pullRequest.user.id]) ||
+            0;
         const labels = pullRequest.labels;
         const labelNames = labels.map((label) => label.name);
         const pointsReceived = points.getPointsFromLabels(configuration, labelNames);
@@ -13344,12 +13329,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.readConfiguration = exports.parseConfig = void 0;
 const fs_1 = __nccwpck_require__(5747);
 const Either_1 = __nccwpck_require__(7945);
 const t = __importStar(__nccwpck_require__(4478));
 const toml = __importStar(__nccwpck_require__(8830));
+const path_1 = __importDefault(__nccwpck_require__(5622));
+const CONFIG_FILE = "./.github/gbp.toml";
 const configurationSchema = t.intersection([
     t.partial({
         no_balance_label: t.string,
@@ -13370,15 +13360,30 @@ function parseConfig(configurationText) {
     }
 }
 exports.parseConfig = parseConfig;
-function readConfiguration() {
+function readConfiguration(basePath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const configFile = yield fs_1.promises.readFile("./.github/gbp.toml", {
+        const configFile = yield fs_1.promises.readFile(basePath ? path_1.default.join(basePath, CONFIG_FILE) : CONFIG_FILE, {
             encoding: "utf-8",
         });
         return parseConfig(configFile);
     });
 }
 exports.readConfiguration = readConfiguration;
+
+
+/***/ }),
+
+/***/ 3940:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.filterUndefined = void 0;
+const filterUndefined = (values) => {
+    return values.filter((value) => value !== undefined);
+};
+exports.filterUndefined = filterUndefined;
 
 
 /***/ }),
@@ -13419,19 +13424,34 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(3923));
 const github = __importStar(__nccwpck_require__(5873));
+const collect_1 = __nccwpck_require__(3295);
 const merged_1 = __nccwpck_require__(1268);
 const opened_1 = __nccwpck_require__(8350);
 const configuration_1 = __nccwpck_require__(5139);
+const github_1 = __nccwpck_require__(3724);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const configuration = yield configuration_1.readConfiguration().catch((reason) => {
+        const directory = core.getInput("directory", {
+            required: false,
+        });
+        const configuration = yield configuration_1.readConfiguration(directory).catch((reason) => {
             return Promise.reject(`Couldn't read configuration file.\n${reason}`);
         });
+        const mediator = new github_1.GithubMediator(configuration, github.context.payload, directory);
+        if (core.getInput("collect", {
+            required: false,
+        }) === "true") {
+            return collect_1.collect(mediator);
+        }
+        const pullRequest = github.context.payload.pull_request;
+        if (pullRequest === undefined) {
+            return Promise.reject("No pull request detected.");
+        }
         switch (github.context.payload.action) {
             case "opened":
-                return opened_1.opened(configuration);
+                return opened_1.opened(configuration, mediator, pullRequest, directory);
             case "closed":
-                return merged_1.merged(configuration);
+                return merged_1.merged(configuration, mediator, pullRequest, directory);
             default:
                 core.info(`Unknown action: ${github.context.payload.action}`);
         }
@@ -13444,11 +13464,30 @@ run().catch((problem) => {
 
 /***/ }),
 
-/***/ 7470:
-/***/ (function(__unused_webpack_module, exports) {
+/***/ 3724:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13458,46 +13497,236 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isMaintainer = void 0;
-function isMaintainer(octokit, maintainerTeamSlug, payload, user) {
-    var _a, _b, _c, _d, _e, _f;
-    return __awaiter(this, void 0, void 0, function* () {
-        if (maintainerTeamSlug === undefined ||
-            ((_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.repo.owner.type) !== "Organization") {
-            const collaborator = yield octokit.repos
-                .getCollaboratorPermissionLevel({
-                owner: (_c = (_b = payload.repository) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.login,
-                repo: (_d = payload.repository) === null || _d === void 0 ? void 0 : _d.name,
-                username: user.login,
-            })
-                .catch(() => {
-                return undefined;
-            });
-            if (collaborator === undefined) {
-                return false;
+exports.GithubMediator = void 0;
+const core = __importStar(__nccwpck_require__(3923));
+const github = __importStar(__nccwpck_require__(5873));
+const child_process_1 = __nccwpck_require__(3129);
+const Either_1 = __nccwpck_require__(7945);
+const fs_1 = __nccwpck_require__(5747);
+const t = __importStar(__nccwpck_require__(4478));
+const path_1 = __importDefault(__nccwpck_require__(5622));
+const toml_1 = __importDefault(__nccwpck_require__(8830));
+const filterUndefined_1 = __nccwpck_require__(3940);
+const points_1 = __nccwpck_require__(5474);
+const pointDifferenceSchema = t.interface({
+    user: t.strict({
+        id: t.number,
+        login: t.string,
+    }),
+    difference: t.number,
+});
+const DIRECTORY = "point-differences";
+const getFilenameForId = (id) => `${DIRECTORY}/${id}.json`;
+const execShellCommand = (command, cwd) => {
+    return new Promise((resolve, reject) => {
+        child_process_1.exec(command, { cwd }, (error, stdout) => {
+            if (error) {
+                reject(error);
             }
-            const permission = collaborator.data.permission;
-            return permission === "admin" || permission === "write";
+            else {
+                resolve(stdout);
+            }
+        });
+    });
+};
+const createCatchFileNotFound = (value) => {
+    return (error) => {
+        if (error.code !== "EEXIST" && error.code !== "ENOENT") {
+            return Promise.reject(error);
         }
         else {
-            const membership = yield octokit.teams
-                .getMembershipForUserInOrg({
-                org: (_f = (_e = payload.repository) === null || _e === void 0 ? void 0 : _e.owner) === null || _f === void 0 ? void 0 : _f.login,
-                team_slug: maintainerTeamSlug,
-                username: user.login,
-            })
-                .catch(() => {
-                return undefined;
-            });
-            if (membership === undefined) {
-                return false;
-            }
-            return membership.data.state === "active";
+            return Promise.resolve(value);
         }
-    });
+    };
+};
+const catchFileNotFound = createCatchFileNotFound(undefined);
+class GithubMediator {
+    constructor(configuration, payload, directory) {
+        this.configuration = configuration;
+        this.directory = directory;
+        this.payload = payload;
+        this.octokit = github.getOctokit(core.getInput("token"));
+    }
+    execShellCommand(command) {
+        return execShellCommand(command, this.directory);
+    }
+    getPointDifferences() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const differencesDirectory = this.joinDirectory(DIRECTORY);
+            const filenames = yield fs_1.promises
+                .readdir(differencesDirectory)
+                .catch(createCatchFileNotFound([]));
+            return Promise.all(filenames.map((filename) => {
+                filename = path_1.default.join(differencesDirectory, filename);
+                return fs_1.promises
+                    .open(filename, "r")
+                    .then((file) => {
+                    return file.readFile({
+                        encoding: "utf-8",
+                    });
+                })
+                    .then(JSON.parse)
+                    .then((contentObject) => {
+                    const valueEither = pointDifferenceSchema.decode(contentObject);
+                    if (Either_1.isRight(valueEither)) {
+                        return valueEither.right;
+                    }
+                    else {
+                        throw valueEither.left;
+                    }
+                })
+                    .catch((problem) => __awaiter(this, void 0, void 0, function* () {
+                    core.error(`${filename} was not in the right format! ${problem}`);
+                    yield fs_1.promises.unlink(filename);
+                    return undefined;
+                }));
+            }))
+                .then(filterUndefined_1.filterUndefined)
+                .then((pointDifferences) => {
+                const pointDifferencesById = new Map();
+                // Track usernames separately in case someone changed username halfway through
+                const usernames = new Map();
+                for (const difference of Object.values(pointDifferences)) {
+                    const user = difference.user;
+                    pointDifferencesById.set(user.id, (pointDifferencesById.get(user.id) || 0) +
+                        difference.difference);
+                    usernames.set(user.id, user.login);
+                }
+                return new Map([...pointDifferencesById.entries()].map(([userId, pointDifference]) => {
+                    return [
+                        {
+                            id: userId,
+                            login: usernames.get(userId),
+                        },
+                        pointDifference,
+                    ];
+                }));
+            });
+        });
+    }
+    info(message) {
+        core.info(message);
+    }
+    isMaintainer(user) {
+        var _a, _b, _c, _d, _e, _f;
+        return __awaiter(this, void 0, void 0, function* () {
+            const maintainerTeamSlug = this.configuration.maintainer_team_slug;
+            const payload = this.payload;
+            const octokit = this.octokit;
+            if (maintainerTeamSlug === undefined ||
+                ((_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.repo.owner.type) !== "Organization") {
+                const collaborator = yield octokit.repos
+                    .getCollaboratorPermissionLevel({
+                    owner: (_c = (_b = payload.repository) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.login,
+                    repo: (_d = payload.repository) === null || _d === void 0 ? void 0 : _d.name,
+                    username: user.login,
+                })
+                    .catch(() => {
+                    return undefined;
+                });
+                if (collaborator === undefined) {
+                    return false;
+                }
+                const permission = collaborator.data.permission;
+                return permission === "admin" || permission === "write";
+            }
+            else {
+                const membership = yield octokit.teams
+                    .getMembershipForUserInOrg({
+                    org: (_f = (_e = payload.repository) === null || _e === void 0 ? void 0 : _e.owner) === null || _f === void 0 ? void 0 : _f.login,
+                    team_slug: maintainerTeamSlug,
+                    username: user.login,
+                })
+                    .catch(() => {
+                    return undefined;
+                });
+                if (membership === undefined) {
+                    return false;
+                }
+                return membership.data.state === "active";
+            }
+        });
+    }
+    newPointDifference(id, user, pointDifference) {
+        var _a, _b, _c;
+        return __awaiter(this, void 0, void 0, function* () {
+            const pointDifferenceData = {
+                difference: pointDifference,
+                // Don't just pass in `user`, since there's a lot more than just these two fields
+                user: {
+                    id: user.id,
+                    login: user.login,
+                },
+            };
+            yield fs_1.promises.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound);
+            this.octokit.repos.createOrUpdateFileContents({
+                branch: core.getInput("branch", {
+                    required: false,
+                }),
+                content: Buffer.from(JSON.stringify(pointDifferenceData)).toString("base64"),
+                owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+                repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+                message: `Updating GBP balances for #${id}`,
+                path: getFilenameForId(id),
+            });
+        });
+    }
+    postComment(comment) {
+        var _a, _b, _c;
+        return __awaiter(this, void 0, void 0, function* () {
+            this.octokit.issues.createComment({
+                owner: (_b = (_a = github.context.payload.repository) === null || _a === void 0 ? void 0 : _a.owner) === null || _b === void 0 ? void 0 : _b.login,
+                repo: (_c = github.context.payload.repository) === null || _c === void 0 ? void 0 : _c.name,
+                issue_number: this.payload.pull_request.number,
+                body: comment,
+            });
+        });
+    }
+    writePointDifferences(pointDifferences) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (pointDifferences.size === 0) {
+                core.info("No point differences.");
+                return;
+            }
+            let balanceSheet = yield points_1.readBalanceFile(this.directory);
+            const balances = balanceSheet ? points_1.readBalances(balanceSheet) : {};
+            for (const [user, points] of pointDifferences.entries()) {
+                balanceSheet = points_1.setBalance(balanceSheet, user, (balances[user.id] || 0) + points);
+            }
+            if (balanceSheet === undefined) {
+                return;
+            }
+            try {
+                toml_1.default.parse(balanceSheet);
+            }
+            catch (_a) {
+                return Promise.reject(`setBalance resulted in invalid output: ${balanceSheet}`);
+            }
+            yield Promise.all([
+                points_1.writeBalanceFile(balanceSheet, this.directory),
+                fs_1.promises
+                    .readdir(this.joinDirectory(DIRECTORY))
+                    .then((filenames) => {
+                    return Promise.all(filenames.map((filename) => fs_1.promises.unlink(this.joinDirectory(DIRECTORY, filename))));
+                })
+                    .catch(catchFileNotFound),
+            ]);
+            yield this.execShellCommand("git add .");
+            yield this.execShellCommand(`git commit -m "Updating ${pointDifferences.size} GBP score(s)"`);
+            yield this.execShellCommand("git push origin HEAD");
+        });
+    }
+    joinDirectory(...paths) {
+        return this.directory
+            ? path_1.default.join(this.directory, ...paths)
+            : path_1.default.join(...paths);
+    }
 }
-exports.isMaintainer = isMaintainer;
+exports.GithubMediator = GithubMediator;
 
 
 /***/ }),
@@ -13535,14 +13764,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setBalance = exports.readBalances = exports.readBalanceFile = exports.getPointsFromLabels = exports.HEADER = void 0;
+exports.writeBalanceFile = exports.setBalance = exports.readBalances = exports.readBalanceFile = exports.getPointsFromLabels = exports.HEADER = void 0;
 const fs_1 = __nccwpck_require__(5747);
 const Either_1 = __nccwpck_require__(7945);
 const t = __importStar(__nccwpck_require__(4478));
 const toml = __importStar(__nccwpck_require__(8830));
+const path_1 = __importDefault(__nccwpck_require__(5622));
 exports.HEADER = "# This file is @generated by the GBP actions. " +
     "If you edit this, preserve the format, and ensure IDs are sorted in numerical order.\n";
+const BALANCES_FILE = "./.github/gbp-balances.toml";
 /// User IDs -> balances
 const validateBalances = t.record(t.string, t.number);
 function getPointsFromLabels(configuration, labels) {
@@ -13566,10 +13800,13 @@ function getUserId(line) {
     }
     return userId;
 }
-function readBalanceFile() {
+function getBalancePath(basePath) {
+    return basePath ? path_1.default.join(basePath, BALANCES_FILE) : BALANCES_FILE;
+}
+function readBalanceFile(basePath) {
     return __awaiter(this, void 0, void 0, function* () {
         return fs_1.promises
-            .open("./.github/gbp-balances.toml", "r")
+            .open(getBalancePath(basePath), "r")
             .then((file) => file.readFile({
             encoding: "utf-8",
         }))
@@ -13615,6 +13852,14 @@ function setBalance(tomlOutput, user, newBalance) {
     return `${tomlOutput}\n${balanceLine}`;
 }
 exports.setBalance = setBalance;
+function writeBalanceFile(contents, basePath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return fs_1.promises.writeFile(getBalancePath(basePath), contents, {
+            encoding: "utf-8",
+        });
+    });
+}
+exports.writeBalanceFile = writeBalanceFile;
 
 
 /***/ }),
@@ -13632,6 +13877,14 @@ module.exports = eval("require")("encoding");
 
 "use strict";
 module.exports = require("assert");;
+
+/***/ }),
+
+/***/ 3129:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");;
 
 /***/ }),
 

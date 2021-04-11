@@ -2,6 +2,9 @@ import { promises as fs } from "fs"
 import { isRight } from "fp-ts/lib/Either"
 import * as t from "io-ts"
 import * as toml from "toml"
+import path from "path"
+
+const CONFIG_FILE = "./.github/gbp.toml"
 
 export type Configuration = {
     maintainer_team_slug?: string
@@ -39,10 +42,15 @@ export function parseConfig(configurationText: string): Configuration {
     }
 }
 
-export async function readConfiguration(): Promise<Configuration> {
-    const configFile = await fs.readFile("./.github/gbp.toml", {
-        encoding: "utf-8",
-    })
+export async function readConfiguration(
+    basePath?: string,
+): Promise<Configuration> {
+    const configFile = await fs.readFile(
+        basePath ? path.join(basePath, CONFIG_FILE) : CONFIG_FILE,
+        {
+            encoding: "utf-8",
+        },
+    )
 
     return parseConfig(configFile)
 }
