@@ -18,10 +18,10 @@ export type Configuration = {
 const configurationSchema = t.intersection([
     t.partial({
         collection_method: t.union([
-            // Adds the top scoring positive label to the lowest scoring negative label (default)
+            // Adds the top scoring positive label to the lowest scoring negative label
             t.literal("high_vs_low"),
 
-            // Adds all point labels together
+            // Adds all point labels together (default)
             t.literal("sum"),
         ]),
         no_balance_label: t.string,

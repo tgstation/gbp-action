@@ -27,13 +27,12 @@ export function getPointsFromLabels(
         return 0
     }
 
-    if (
-        configuration.collection_method === "high_vs_low" ||
-        configuration.collection_method === undefined
-    ) {
-        return collectPointsHighVsLow(configuration, labels)
-    } else if (configuration.collection_method === "sum") {
-        return collectPointsSum(configuration, labels)
+    switch (configuration.collection_method) {
+        case "high_vs_low":
+        case undefined:
+            return collectPointsHighVsLow(configuration, labels)
+        case "sum":
+            return collectPointsSum(configuration, labels)
     }
 }
 
