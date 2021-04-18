@@ -13342,6 +13342,12 @@ const path_1 = __importDefault(__nccwpck_require__(5622));
 const CONFIG_FILE = "./.github/gbp.toml";
 const configurationSchema = t.intersection([
     t.partial({
+        collection_method: t.union([
+            // Adds the top scoring positive label to the lowest scoring negative label (default)
+            t.literal("high_vs_low"),
+            // Adds all point labels together
+            t.literal("sum"),
+        ]),
         no_balance_label: t.string,
         reset_label: t.string,
     }),
@@ -13780,19 +13786,41 @@ const BALANCES_FILE = "./.github/gbp-balances.toml";
 /// User IDs -> balances
 const validateBalances = t.record(t.string, t.number);
 function getPointsFromLabels(configuration, labels) {
-    let points = 0;
-    for (const label of labels) {
-        if (label === configuration.no_balance_label) {
-            points = 0;
-            break;
-        }
-        else {
-            points += configuration.points.get(label) || 0;
-        }
+    if (configuration.no_balance_label !== undefined &&
+        labels.indexOf(configuration.no_balance_label) !== -1) {
+        return 0;
     }
-    return points;
+    switch (configuration.collection_method) {
+        case "high_vs_low":
+        case undefined:
+            return collectPointsHighVsLow(configuration, labels);
+        case "sum":
+            return collectPointsSum(configuration, labels);
+    }
 }
 exports.getPointsFromLabels = getPointsFromLabels;
+function collectPointsHighVsLow(configuration, labels) {
+    let positiveValue = 0;
+    let negativeValue = 0;
+    for (const label of labels) {
+        const value = configuration.points.get(label);
+        if (value === undefined) {
+            continue;
+        }
+        if (value > 0) {
+            positiveValue = Math.max(positiveValue, value);
+        }
+        else {
+            negativeValue = Math.min(negativeValue, value);
+        }
+    }
+    return positiveValue + negativeValue;
+}
+function collectPointsSum(configuration, labels) {
+    return labels.reduce((value, label) => {
+        return value + (configuration.points.get(label) || 0);
+    }, 0);
+}
 function getUserId(line) {
     const userId = parseInt(line.split(" ")[0], 10);
     if (Number.isNaN(userId)) {

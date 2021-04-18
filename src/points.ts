@@ -19,17 +19,52 @@ export function getPointsFromLabels(
     configuration: Configuration,
     labels: string[],
 ): number {
-    let points = 0
+    if (
+        configuration.no_balance_label !== undefined &&
+        labels.indexOf(configuration.no_balance_label) !== -1
+    ) {
+        return 0
+    }
+
+    switch (configuration.collection_method) {
+        case "high_vs_low":
+        case undefined:
+            return collectPointsHighVsLow(configuration, labels)
+        case "sum":
+            return collectPointsSum(configuration, labels)
+    }
+}
+
+function collectPointsHighVsLow(
+    configuration: Configuration,
+    labels: string[],
+): number {
+    let positiveValue = 0
+    let negativeValue = 0
+
     for (const label of labels) {
-        if (label === configuration.no_balance_label) {
-            points = 0
-            break
+        const value = configuration.points.get(label)
+        if (value === undefined) {
+            continue
+        }
+
+        if (value > 0) {
+            positiveValue = Math.max(positiveValue, value)
         } else {
-            points += configuration.points.get(label) || 0
+            negativeValue = Math.min(negativeValue, value)
         }
     }
 
-    return points
+    return positiveValue + negativeValue
+}
+
+function collectPointsSum(
+    configuration: Configuration,
+    labels: string[],
+): number {
+    return labels.reduce((value, label) => {
+        return value + (configuration.points.get(label) || 0)
+    }, 0)
 }
 
 function getUserId(line: string): number | undefined {
