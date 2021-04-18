@@ -7,6 +7,7 @@ import path from "path"
 const CONFIG_FILE = "./.github/gbp.toml"
 
 export type Configuration = {
+    collection_method?: "high_vs_low" | "sum"
     maintainer_team_slug?: string
     no_balance_label?: string
     reset_label?: string
@@ -16,6 +17,13 @@ export type Configuration = {
 
 const configurationSchema = t.intersection([
     t.partial({
+        collection_method: t.union([
+            // Adds the top scoring positive label to the lowest scoring negative label (default)
+            t.literal("high_vs_low"),
+
+            // Adds all point labels together
+            t.literal("sum"),
+        ]),
         no_balance_label: t.string,
         reset_label: t.string,
     }),

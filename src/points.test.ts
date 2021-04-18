@@ -49,3 +49,120 @@ describe("setBalance", () => {
         )
     })
 })
+
+describe("getPointsFromLabels", () => {
+    const configuration = {
+        no_balance_label: "none",
+        points: new Map([
+            ["+5", 5],
+            ["+3", 3],
+            ["-1", -1],
+            ["-3", -3],
+            ["-5", -5],
+        ]),
+    }
+
+    describe("high_vs_low", () => {
+        it("should compare the highest label to the lowest label", () => {
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["+5", "+3", "-1", "doesn't exist", "doesn't exist", "-3"],
+                ),
+            ).toBe(2)
+        })
+
+        it("should work with one label", () => {
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["+5"],
+                ),
+            ).toBe(5)
+
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["-5"],
+                ),
+            ).toBe(-5)
+
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["+5", "doesn't exist"],
+                ),
+            ).toBe(5)
+        })
+
+        it("should work with only values of one parity", () => {
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["+5", "+3"],
+                ),
+            ).toBe(5)
+
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["-5", "-3"],
+                ),
+            ).toBe(-5)
+        })
+
+        it("should work with no known labels", () => {
+            expect(
+                points.getPointsFromLabels(
+                    {
+                        ...configuration,
+                        collection_method: "high_vs_low",
+                    },
+                    ["doesn't exist", "this one doesn't either"],
+                ),
+            ).toBe(0)
+        })
+    })
+
+    test("sum", () => {
+        expect(
+            points.getPointsFromLabels(
+                {
+                    ...configuration,
+                    collection_method: "sum",
+                },
+                ["+5", "+3", "-1", "doesn't exist", "-5"],
+            ),
+        ).toBe(2)
+    })
+
+    it("should recognize no_balance_label", () => {
+        expect(
+            points.getPointsFromLabels(configuration, [
+                "+5",
+                "+3",
+                "-1",
+                "none",
+                "-5",
+            ]),
+        ).toBe(0)
+    })
+})
