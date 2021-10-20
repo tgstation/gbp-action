@@ -67,13 +67,13 @@ function collectPointsSum(
     }, 0)
 }
 
-function getUserId(line: string): number | undefined {
-    const userId = parseInt(line.split(" ")[0], 10)
-    if (Number.isNaN(userId)) {
-        return undefined
+function getBalance(line: string): number {
+    const balance = parseInt(line.split(" ")[2], 10)
+    if (Number.isNaN(balance)) {
+        return 0
     }
 
-    return userId
+    return balance
 }
 
 function getBalancePath(basePath?: string): string {
@@ -114,30 +114,18 @@ export function setBalance(
         return HEADER + balanceLine
     }
 
-    const replaceRegex = new RegExp(`${user.id} = .*`, "gm")
-    const newOutput = tomlOutput.replace(replaceRegex, balanceLine)
-
-    if (newOutput !== tomlOutput) {
-        return newOutput
-    }
-
-    // Brand new name, find where it is in order
+    // sort for flex reasons
     const lines = tomlOutput.split("\n")
+    const linesUpdated = [...lines]
+    linesUpdated.push(balanceLine)
+    linesUpdated.sort((a, b) => {
+        const balanceA = getBalance(a)
+        const balanceB = getBalance(b)
 
-    for (const [lineNumber, line] of lines.entries()) {
-        const userId = getUserId(line)
-        if (userId === undefined) {
-            continue
-        }
+        return balanceA - balanceB
+    });
 
-        if (user.id < userId) {
-            const linesUpdated = [...lines]
-            linesUpdated.splice(lineNumber, 0, balanceLine)
-            return linesUpdated.join("\n")
-        }
-    }
-
-    return `${tomlOutput}\n${balanceLine}`
+    return linesUpdated.join("\n")
 }
 
 export async function writeBalanceFile(contents: string, basePath?: string) {
