@@ -19,7 +19,7 @@ export async function merged(
 
     const balanceSheet = await points.readBalanceFile(basePath)
     const oldBalance =
-        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+        (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 100
 
     let balance
     let pointsReceived = 0
