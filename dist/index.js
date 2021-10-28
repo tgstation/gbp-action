@@ -13184,7 +13184,7 @@ function merged(configuration, mediator, pullRequest, basePath) {
         const { labels, user } = pullRequest;
         const labelNames = labels.map((label) => label.name);
         const balanceSheet = yield points.readBalanceFile(basePath);
-        const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) ?? 20;
+        const oldBalance = (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0;
         let balance;
         let pointsReceived = 0;
         if (configuration.reset_label !== undefined &&
