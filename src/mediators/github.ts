@@ -97,9 +97,8 @@ export class GithubMediator implements Mediator {
                     })
                     .then(JSON.parse)
                     .then((contentObject) => {
-                        const valueEither = pointDifferenceSchema.decode(
-                            contentObject,
-                        )
+                        const valueEither =
+                            pointDifferenceSchema.decode(contentObject)
 
                         if (isRight(valueEither)) {
                             return valueEither.right
@@ -262,9 +261,9 @@ export class GithubMediator implements Mediator {
 
         try {
             toml.parse(balanceSheet)
-        } catch {
+        } catch (exception) {
             return Promise.reject(
-                `setBalance resulted in invalid output: ${balanceSheet}`,
+                `setBalance resulted in invalid output\n${exception}\nBalance sheet:\n${balanceSheet}`,
             )
         }
 
