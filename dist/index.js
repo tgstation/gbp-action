@@ -13859,9 +13859,8 @@ function setBalance(tomlOutput, user, newBalance) {
         return exports.HEADER + balanceLine;
     }
     const replaceRegex = new RegExp(`${user.id} = .*`, "gm");
-    const newOutput = tomlOutput.replace(replaceRegex, balanceLine);
-    if (newOutput !== tomlOutput) {
-        return newOutput;
+    if (tomlOutput.match(replaceRegex)) {
+        return tomlOutput.replace(replaceRegex, balanceLine);
     }
     // Brand new name, find where it is in order
     const lines = tomlOutput.split("\n");

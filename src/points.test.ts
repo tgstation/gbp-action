@@ -48,6 +48,13 @@ describe("setBalance", () => {
                 ].join("\n"),
         )
     })
+
+    it("should preserve a balance when it doesn't change", () => {
+        let output = points.setBalance(undefined, user, 5)
+        output = points.setBalance(output, user, 5)
+
+        expect(output).toBe(points.HEADER + ["100 = 5 # Mothblocks"].join("\n"))
+    })
 })
 
 describe("getPointsFromLabels", () => {
