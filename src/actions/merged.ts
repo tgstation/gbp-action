@@ -29,7 +29,7 @@ export async function merged(
         labelNames.indexOf(configuration.reset_label) !== -1
     ) {
         // Force pointsReceived up enough to make balance default
-        pointsReceived = 0 - oldBalance
+        pointsReceived = -oldBalance
     } else {
         pointsReceived = points.getPointsFromLabels(configuration, labelNames)
     }
