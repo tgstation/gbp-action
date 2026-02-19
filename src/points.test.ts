@@ -173,3 +173,16 @@ describe("getPointsFromLabels", () => {
         ).toBe(0)
     })
 })
+
+describe("readBalanceFile", () => {
+    it("should load the balance sheet", async () => {
+        expect(await points.readBalanceFile()).toBe(
+            points.HEADER +
+                [
+                    "24975989 = -1234 # Timberpoes",
+                    "35135081 = -10 # Mothblocks",
+                    "",
+                ].join("\n"),
+        )
+    })
+})
