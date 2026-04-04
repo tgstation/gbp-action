@@ -66,6 +66,9 @@
         /* Advanced Options */
         "skipLibCheck": true /* Skip type checking of declaration files. */,
         "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
-        "types": ["node", "jest"] /*Add node & jest typefields to the project*/
+        "types": [
+            "node",
+            "jest"
+        ] /* Add node & jest typefields to the project */
     }
 }
