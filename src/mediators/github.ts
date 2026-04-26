@@ -163,7 +163,7 @@ export class GithubMediator implements Mediator {
             maintainerTeamSlug === undefined ||
             payload.pull_request?.base.repo.owner.type !== "Organization"
         ) {
-            const collaborator = await octokit.repos
+            const collaborator = await octokit.rest.repos
                 .getCollaboratorPermissionLevel({
                     owner: payload.repository?.owner?.login!,
                     repo: payload.repository?.name!,
@@ -180,7 +180,7 @@ export class GithubMediator implements Mediator {
             const permission = collaborator.data.permission
             return permission === "admin" || permission === "write"
         } else {
-            const membership = await octokit.teams
+            const membership = await octokit.rest.teams
                 .getMembershipForUserInOrg({
                     org: payload.repository?.owner?.login!,
                     team_slug: maintainerTeamSlug,
@@ -215,7 +215,7 @@ export class GithubMediator implements Mediator {
 
         await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
-        this.octokit.repos.createOrUpdateFileContents({
+        this.octokit.rest.repos.createOrUpdateFileContents({
             branch: core.getInput("branch", {
                 required: false,
             }),
@@ -230,7 +230,7 @@ export class GithubMediator implements Mediator {
     }
 
     async postComment(comment: string) {
-        this.octokit.issues.createComment({
+        this.octokit.rest.issues.createComment({
             owner: github.context.payload.repository?.owner?.login!,
             repo: github.context.payload.repository?.name!,
             issue_number: this.payload.pull_request!.number,

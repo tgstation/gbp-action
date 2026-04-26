@@ -30,7 +30,7 @@ export async function opened(
     const pointsReceived = points.getPointsFromLabels(configuration, labelNames)
 
     if (userBalance < 0 && pointsReceived <= 0) {
-        await octokit.issues.createComment({
+        await octokit.rest.issues.createComment({
             owner: github.context.payload.repository?.owner?.login!,
             repo: github.context.payload.repository?.name!,
             issue_number: pullRequest.number,
