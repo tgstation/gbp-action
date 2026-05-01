@@ -1,4 +1,4 @@
-/******/ (() => { // webpackBootstrap
+require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
 /***/ 2673:
@@ -45451,7 +45451,7 @@ async function collect(mediator) {
     const pointDifferences = await mediator.getPointDifferences();
     return mediator.writePointDifferences(pointDifferences);
 }
-
+//# sourceMappingURL=collect.js.map
 // EXTERNAL MODULE: ./node_modules/fp-ts/lib/Either.js
 var Either = __nccwpck_require__(9845);
 // EXTERNAL MODULE: ./node_modules/io-ts/lib/index.js
@@ -45472,7 +45472,7 @@ const BALANCES_FILE = "./.github/gbp-balances.toml";
 const validateBalances = io_ts_lib.record(io_ts_lib.string, io_ts_lib.number);
 function getPointsFromLabels(configuration, labels) {
     if (configuration.no_balance_label !== undefined &&
-        labels.indexOf(configuration.no_balance_label) !== -1) {
+        labels.includes(configuration.no_balance_label)) {
         return 0;
     }
     switch (configuration.collection_method) {
@@ -45518,7 +45518,7 @@ function getBalancePath(basePath) {
 async function readBalanceFile(basePath) {
     return external_fs_namespaceObject.promises
         .open(getBalancePath(basePath), "r")
-        .then((file) => file.readFile({
+        .then(async (file) => file.readFile({
         encoding: "utf-8",
     }))
         .catch(() => {
@@ -45563,7 +45563,7 @@ async function writeBalanceFile(contents, basePath) {
         encoding: "utf-8",
     });
 }
-
+//# sourceMappingURL=points.js.map
 ;// CONCATENATED MODULE: ./out/actions/merged.js
 
 async function merged(configuration, mediator, pullRequest, basePath) {
@@ -45578,7 +45578,7 @@ async function merged(configuration, mediator, pullRequest, basePath) {
     let balance;
     let pointsReceived = 0;
     if (configuration.reset_label !== undefined &&
-        labelNames.indexOf(configuration.reset_label) !== -1) {
+        labelNames.includes(configuration.reset_label)) {
         // Force pointsReceived up enough to make balance default
         pointsReceived = -oldBalance;
     }
@@ -45611,7 +45611,7 @@ async function merged(configuration, mediator, pullRequest, basePath) {
         await mediator.postComment(comment);
     }
 }
-
+//# sourceMappingURL=merged.js.map
 ;// CONCATENATED MODULE: ./out/actions/opened.js
 
 
@@ -45640,7 +45640,7 @@ async function opened(configuration, mediator, pullRequest, basePath) {
         });
     }
 }
-
+//# sourceMappingURL=opened.js.map
 ;// CONCATENATED MODULE: ./out/configuration.js
 
 
@@ -45682,12 +45682,12 @@ async function readConfiguration(basePath) {
     });
     return parseConfig(configFile);
 }
-
+//# sourceMappingURL=configuration.js.map
 ;// CONCATENATED MODULE: ./out/filterUndefined.js
 const filterUndefined = (values) => {
     return values.filter((value) => value !== undefined);
 };
-
+//# sourceMappingURL=filterUndefined.js.map
 ;// CONCATENATED MODULE: ./out/mediators/github.js
 
 
@@ -45708,7 +45708,7 @@ const pointDifferenceSchema = io_ts_lib["interface"]({
 });
 const DIRECTORY = "point-differences";
 const getFilenameForId = (id) => `${DIRECTORY}/${id}.json`;
-const execShellCommand = (command, cwd) => {
+async function execShellCommand(command, cwd) {
     return new Promise((resolve, reject) => {
         (0,external_child_process_namespaceObject.exec)(command, { cwd }, (error, stdout) => {
             if (error) {
@@ -45719,9 +45719,9 @@ const execShellCommand = (command, cwd) => {
             }
         });
     });
-};
+}
 const createCatchFileNotFound = (value) => {
-    return (error) => {
+    return async (error) => {
         if (error.code !== "EEXIST" && error.code !== "ENOENT") {
             return Promise.reject(error);
         }
@@ -45742,7 +45742,7 @@ class GithubMediator {
         this.payload = payload;
         this.octokit = getOctokit(getInput("token"));
     }
-    execShellCommand(command) {
+    async execShellCommand(command) {
         return execShellCommand(command, this.directory);
     }
     async getPointDifferences() {
@@ -45750,11 +45750,11 @@ class GithubMediator {
         const filenames = await external_fs_namespaceObject.promises
             .readdir(differencesDirectory)
             .catch(createCatchFileNotFound([]));
-        return Promise.all(filenames.map((filename) => {
+        return Promise.all(filenames.map(async (filename) => {
             filename = external_path_default().join(differencesDirectory, filename);
             return external_fs_namespaceObject.promises
                 .open(filename, "r")
-                .then((file) => {
+                .then(async (file) => {
                 return file.readFile({
                     encoding: "utf-8",
                 });
@@ -45862,7 +45862,7 @@ class GithubMediator {
         this.octokit.rest.issues.createComment({
             owner: github_context.payload.repository?.owner?.login,
             repo: github_context.payload.repository?.name,
-            issue_number: this.payload.pull_request.number,
+            issue_number: this.payload.pull_request?.number,
             body: comment,
         });
     }
@@ -45889,8 +45889,8 @@ class GithubMediator {
             writeBalanceFile(balanceSheet, this.directory),
             external_fs_namespaceObject.promises
                 .readdir(this.joinDirectory(DIRECTORY))
-                .then((filenames) => {
-                return Promise.all(filenames.map((filename) => external_fs_namespaceObject.promises.unlink(this.joinDirectory(DIRECTORY, filename))));
+                .then(async (filenames) => {
+                return Promise.all(filenames.map(async (filename) => external_fs_namespaceObject.promises.unlink(this.joinDirectory(DIRECTORY, filename))));
             })
                 .catch(catchFileNotFound),
         ]);
@@ -45904,7 +45904,7 @@ class GithubMediator {
             : external_path_default().join(...paths);
     }
 }
-
+//# sourceMappingURL=github.js.map
 ;// CONCATENATED MODULE: ./out/index.js
 
 
@@ -45917,7 +45917,7 @@ async function run() {
     const directory = getInput("directory", {
         required: false,
     });
-    const configuration = await readConfiguration(directory).catch((reason) => {
+    const configuration = await readConfiguration(directory).catch(async (reason) => {
         return Promise.reject(`Couldn't read configuration file.\n${reason}`);
     });
     const mediator = new GithubMediator(configuration, github_context.payload, directory);
@@ -45942,9 +45942,10 @@ async function run() {
 run().catch((problem) => {
     setFailed(problem.toString());
 });
-
+//# sourceMappingURL=index.js.map
 })();
 
 module.exports = __webpack_exports__;
 /******/ })()
 ;
+//# sourceMappingURL=index.js.map

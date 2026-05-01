@@ -10,7 +10,7 @@ export async function opened(
     mediator: Mediator,
     pullRequest: GithubPullRequest,
     basePath?: string,
-) {
+): Promise<void> {
     const octokit = github.getOctokit(core.getInput("token"))
 
     if (await mediator.isMaintainer(pullRequest.user)) {
@@ -31,8 +31,8 @@ export async function opened(
 
     if (userBalance < 0 && pointsReceived <= 0) {
         await octokit.rest.issues.createComment({
-            owner: github.context.payload.repository?.owner?.login!,
-            repo: github.context.payload.repository?.name!,
+            owner: github.context.payload.repository?.owner?.login as string,
+            repo: github.context.payload.repository?.name as string,
             issue_number: pullRequest.number,
             body:
                 `You currently have a negative Fix/Feature pull request delta of ${userBalance}. ` +

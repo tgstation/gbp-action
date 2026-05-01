@@ -3,18 +3,22 @@ import * as github from "@actions/github"
 import { collect } from "./actions/collect"
 import { merged } from "./actions/merged"
 import { opened } from "./actions/opened"
-import { readConfiguration } from "./configuration"
+import { Configuration, readConfiguration } from "./configuration"
 import { GithubPullRequest } from "./github"
 import { GithubMediator } from "./mediators/github"
 
-async function run() {
+async function run(): Promise<void> {
     const directory = core.getInput("directory", {
         required: false,
     })
 
-    const configuration = await readConfiguration(directory).catch((reason) => {
-        return Promise.reject(`Couldn't read configuration file.\n${reason}`)
-    })
+    const configuration = await readConfiguration(directory).catch(
+        async (reason): Promise<Configuration> => {
+            return Promise.reject(
+                `Couldn't read configuration file.\n${reason}`,
+            )
+        },
+    )
 
     const mediator = new GithubMediator(
         configuration,

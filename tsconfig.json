@@ -68,6 +68,7 @@
             "node",
             "jest"
         ] /* Add node & jest typefields to the project */,
+        "sourceMap": true                         /* For debugging */
     },
     "exclude": ["node_modules", "**/*.test.ts"]
 }

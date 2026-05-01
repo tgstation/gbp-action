@@ -8,7 +8,7 @@ export async function merged(
     mediator: Mediator,
     pullRequest: GithubPullRequest,
     basePath?: string,
-) {
+): Promise<void> {
     if (!pullRequest.merged) {
         mediator.info("Pull request was closed, not merged.")
         return
@@ -26,7 +26,7 @@ export async function merged(
 
     if (
         configuration.reset_label !== undefined &&
-        labelNames.indexOf(configuration.reset_label) !== -1
+        labelNames.includes(configuration.reset_label)
     ) {
         // Force pointsReceived up enough to make balance default
         pointsReceived = -oldBalance

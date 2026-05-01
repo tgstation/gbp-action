@@ -21,7 +21,7 @@ export function getPointsFromLabels(
 ): number {
     if (
         configuration.no_balance_label !== undefined &&
-        labels.indexOf(configuration.no_balance_label) !== -1
+        labels.includes(configuration.no_balance_label)
     ) {
         return 0
     }
@@ -85,10 +85,11 @@ export async function readBalanceFile(
 ): Promise<string | undefined> {
     return fs
         .open(getBalancePath(basePath), "r")
-        .then((file) =>
-            file.readFile({
-                encoding: "utf-8",
-            }),
+        .then(
+            async (file): Promise<string> =>
+                file.readFile({
+                    encoding: "utf-8",
+                }),
         )
         .catch(() => {
             return undefined
@@ -138,7 +139,10 @@ export function setBalance(
     return `${tomlOutput}\n${balanceLine}`
 }
 
-export async function writeBalanceFile(contents: string, basePath?: string) {
+export async function writeBalanceFile(
+    contents: string,
+    basePath?: string,
+): Promise<void> {
     return fs.writeFile(getBalancePath(basePath), contents, {
         encoding: "utf-8",
     })

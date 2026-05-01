@@ -32,7 +32,10 @@ const DIRECTORY = "point-differences"
 const getFilenameForId = (id: PullRequestId): string =>
     `${DIRECTORY}/${id}.json`
 
-const execShellCommand = (command: string, cwd?: string) => {
+async function execShellCommand(
+    command: string,
+    cwd?: string,
+): Promise<string> {
     return new Promise((resolve, reject) => {
         exec(command, { cwd }, (error, stdout) => {
             if (error) {
@@ -45,7 +48,7 @@ const execShellCommand = (command: string, cwd?: string) => {
 }
 
 const createCatchFileNotFound = <T>(value: T) => {
-    return (error: { code: unknown }) => {
+    return async (error: { code: unknown }) => {
         if (error.code !== "EEXIST" && error.code !== "ENOENT") {
             return Promise.reject(error)
         } else {
@@ -74,7 +77,7 @@ export class GithubMediator implements Mediator {
         this.octokit = github.getOctokit(core.getInput("token"))
     }
 
-    execShellCommand(command: string) {
+    async execShellCommand(command: string): Promise<string> {
         return execShellCommand(command, this.directory)
     }
 
@@ -85,12 +88,12 @@ export class GithubMediator implements Mediator {
             .catch(createCatchFileNotFound<string[]>([]))
 
         return Promise.all(
-            filenames.map((filename) => {
+            filenames.map(async (filename): Promise<any> => {
                 filename = path.join(differencesDirectory, filename)
 
                 return fs
                     .open(filename, "r")
-                    .then((file) => {
+                    .then(async (file): Promise<string> => {
                         return file.readFile({
                             encoding: "utf-8",
                         })
@@ -140,7 +143,7 @@ export class GithubMediator implements Mediator {
                             return [
                                 {
                                     id: userId,
-                                    login: usernames.get(userId)!,
+                                    login: usernames.get(userId) as string,
                                 },
                                 pointDifference,
                             ]
@@ -150,7 +153,7 @@ export class GithubMediator implements Mediator {
             })
     }
 
-    info(message: string) {
+    info(message: string): void {
         core.info(message)
     }
 
@@ -165,9 +168,9 @@ export class GithubMediator implements Mediator {
         ) {
             const collaborator = await octokit.rest.repos
                 .getCollaboratorPermissionLevel({
-                    owner: payload.repository?.owner?.login!,
-                    repo: payload.repository?.name!,
-                    username: user.login!,
+                    owner: payload.repository?.owner?.login as string,
+                    repo: payload.repository?.name as string,
+                    username: user.login,
                 })
                 .catch(() => {
                     return undefined
@@ -182,9 +185,9 @@ export class GithubMediator implements Mediator {
         } else {
             const membership = await octokit.rest.teams
                 .getMembershipForUserInOrg({
-                    org: payload.repository?.owner?.login!,
+                    org: payload.repository?.owner?.login as string,
                     team_slug: maintainerTeamSlug,
-                    username: user.login!,
+                    username: user.login,
                 })
                 .catch(() => {
                     return undefined
@@ -202,7 +205,7 @@ export class GithubMediator implements Mediator {
         id: PullRequestId,
         user: GithubUser,
         pointDifference: number,
-    ) {
+    ): Promise<void> {
         const pointDifferenceData: t.TypeOf<typeof pointDifferenceSchema> = {
             difference: pointDifference,
 
@@ -222,23 +225,25 @@ export class GithubMediator implements Mediator {
             content: Buffer.from(JSON.stringify(pointDifferenceData)).toString(
                 "base64",
             ),
-            owner: github.context.payload.repository?.owner?.login!,
-            repo: github.context.payload.repository?.name!,
+            owner: github.context.payload.repository?.owner?.login as string,
+            repo: github.context.payload.repository?.name as string,
             message: `Updating GBP balances for #${id}`,
             path: getFilenameForId(id),
         })
     }
 
-    async postComment(comment: string) {
+    async postComment(comment: string): Promise<void> {
         this.octokit.rest.issues.createComment({
-            owner: github.context.payload.repository?.owner?.login!,
-            repo: github.context.payload.repository?.name!,
-            issue_number: this.payload.pull_request!.number,
+            owner: github.context.payload.repository?.owner?.login as string,
+            repo: github.context.payload.repository?.name as string,
+            issue_number: this.payload.pull_request?.number as number,
             body: comment,
         })
     }
 
-    async writePointDifferences(pointDifferences: Map<GithubUser, number>) {
+    async writePointDifferences(
+        pointDifferences: Map<GithubUser, number>,
+    ): Promise<void> {
         if (pointDifferences.size === 0) {
             core.info("No point differences.")
             return
@@ -271,10 +276,13 @@ export class GithubMediator implements Mediator {
             writeBalanceFile(balanceSheet, this.directory),
             fs
                 .readdir(this.joinDirectory(DIRECTORY))
-                .then((filenames) => {
+                .then(async (filenames): Promise<void[]> => {
                     return Promise.all(
-                        filenames.map((filename) =>
-                            fs.unlink(this.joinDirectory(DIRECTORY, filename)),
+                        filenames.map(
+                            async (filename): Promise<void> =>
+                                fs.unlink(
+                                    this.joinDirectory(DIRECTORY, filename),
+                                ),
                         ),
                     )
                 })

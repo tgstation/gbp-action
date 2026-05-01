@@ -3,6 +3,15 @@
   "version": "1.0.0",
   "description": "Reward or take away points to contributors based on PR labels.",
   "main": "index.js",
+  "scripts": {
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint",
+    "build": "tsc",
+    "package": "ncc build out/index.js --source-map -o dist",
+    "test": "jest",
+    "all": "npm run format && npm run format-check && npm run lint && npm run build && npm run package & npm run test"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/tgstation/gbp-action"
@@ -10,9 +19,6 @@
   "keywords": [
     "actions"
   ],
-  "scripts": {
-    "test": "jest"
-  },
   "author": "Mothblocks",
   "license": "MPL-2.0",
   "dependencies": {
@@ -26,9 +32,17 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.3",
     "@babel/preset-typescript": "^7.28.5",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
     "jest": "^30.3.0",
+    "prettier": "^3.8.3",
     "typescript": "^6.0.3"
   }
 }
