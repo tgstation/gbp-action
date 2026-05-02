@@ -21,7 +21,6 @@ jobs:
                   npm ls
                   npm run build
                   npm i -g @vercel/ncc
-                  npm run package
             - name: Validate dist
               run: |
                   cp dist/index.js index_pr.js
