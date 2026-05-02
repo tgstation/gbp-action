@@ -24,7 +24,7 @@ jobs:
             - name: Validate dist
               run: |
                   npm i -g @vercel/ncc
-                  npm run build
+                  tsc
                   ncc build out/index.js -o dist
                   cp dist/index.js dist/index_pr.js
                   ncc build out/index.js -o dist
