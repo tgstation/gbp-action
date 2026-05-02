@@ -14,20 +14,21 @@ jobs:
             - name: Setup node
               uses: actions/setup-node@v6
               with:
-                  node-version: 24.x
+                  node-version: 20
             - name: Install dependencies
               run: |
                   npm ci
                   npm ls
-                  npm run build
-                  npm i -g @vercel/ncc
-                  npm run package
 
               # FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. When this gets fixed change the exit code to 1 to enfore checks again
             - name: Validate dist
               run: |
                   cp dist/index.js index_pr.js
-                  rm -r dist
+                  rm -rf dist
+                  rm -rf node_modules
+                  npm ci
+                  npm i -g @vercel/ncc
+                  npm run build
                   npm run package
                   diff dist/index.js index_pr.js
                   if [ $? -ne 0 ]; then
