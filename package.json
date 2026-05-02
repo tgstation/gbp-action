@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Reward or take away points to contributors based on PR labels.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
     "lint": "eslint",
     "build": "tsc",
-    "package": "ncc build out/index.js --source-map -o dist",
+    "package": "rollup out/index.js -c --format cjs --file dist/index.js --sourcemap",
     "test": "jest",
     "all": "npm run format && npm run format-check && npm run lint && npm run build && npm run package & npm run test"
   },
@@ -34,6 +35,8 @@
     "@babel/preset-typescript": "^7.28.5",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",

@@ -22,16 +22,16 @@ jobs:
             - name: Run Test
               run: npm run test
 
-              # FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. Don't test until resolved
-              # - name: Validate dist
-              #   run: |
-              #       cp dist/index.js index_pr.js
-              #       rm -r dist
-              #       npm i -g @vercel/ncc
-              #       npm run build
-              #       npm run package
-              #       diff dist/index.js index_pr.js
-              #       if [ $? -ne 0 ]; then
-              #           echo "Files differ."
-              #           exit 0
-              #       fi
+              #FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. Don't test until resolved
+            - name: Validate dist
+              run: |
+                  cp dist/index.js index_pr.js
+                  rm -r dist
+                  npm install --global rollup
+                  npm run build
+                  npm run package
+                  diff dist/index.js index_pr.js
+                  if [ $? -ne 0 ]; then
+                      echo "Files differ."
+                      exit 0
+                  fi
