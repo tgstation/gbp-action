@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Reward or take away points to contributors based on PR labels.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "format": "prettier --write **/*.ts",
     "format-check": "prettier --check **/*.ts",
