@@ -26,8 +26,8 @@ jobs:
                   rm -rf dist node_modules
                   npm ci
                   npm ls
-                  npm run package
                   npm i -g @vercel/ncc
+                  npm run package
                   diff dist/index.js index_pr.js
                   if [ $? -ne 0 ]; then
                       echo "Files differ!"
