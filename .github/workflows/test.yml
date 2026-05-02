@@ -20,16 +20,16 @@ jobs:
                   npm ci
                   npm ls
 
-              # FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. When this gets fixed change the exit code to 1 to enfore checks again
-            - name: Validate dist
-              run: |
-                  cp dist/index.js index_pr.js
-                  rm -r dist
-                  npm i -g @vercel/ncc
-                  npm run build
-                  npm run package
-                  diff dist/index.js index_pr.js
-                  if [ $? -ne 0 ]; then
-                      echo "Files differ. This is an non blocking issue with ncc and we should have boycoted ncc by now but i don't have any other alternative. With love to CyberBoss"
-                      exit 0
-                  fi
+              # FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. Don't test until resolved
+              # - name: Validate dist
+              #   run: |
+              #       cp dist/index.js index_pr.js
+              #       rm -r dist
+              #       npm i -g @vercel/ncc
+              #       npm run build
+              #       npm run package
+              #       diff dist/index.js index_pr.js
+              #       if [ $? -ne 0 ]; then
+              #           echo "Files differ."
+              #           exit 0
+              #       fi
