@@ -91,7 +91,8 @@ export async function readBalanceFile(
                     encoding: "utf-8",
                 }),
         )
-        .catch(() => {
+        .catch((e) => {
+            console.log(`Error opening file ${e}`)
             return undefined
         })
 }

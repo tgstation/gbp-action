@@ -45521,7 +45521,8 @@ async function readBalanceFile(basePath) {
         .then(async (file) => file.readFile({
         encoding: "utf-8",
     }))
-        .catch(() => {
+        .catch((e) => {
+        console.log(`Error opening file ${e}`);
         return undefined;
     });
 }
@@ -45659,7 +45660,7 @@ const configurationSchema = io_ts_lib.intersection([
         no_balance_label: io_ts_lib.string,
         reset_label: io_ts_lib.string,
     }),
-    io_ts_lib["interface"]({
+    io_ts_lib.type({
         points: io_ts_lib.record(io_ts_lib.string, io_ts_lib.number),
     }),
 ]);
@@ -45699,7 +45700,7 @@ const filterUndefined = (values) => {
 
 
 
-const pointDifferenceSchema = io_ts_lib["interface"]({
+const pointDifferenceSchema = io_ts_lib.type({
     user: io_ts_lib.strict({
         id: io_ts_lib.number,
         login: io_ts_lib.string,
@@ -45752,28 +45753,36 @@ class GithubMediator {
             .catch(createCatchFileNotFound([]));
         return Promise.all(filenames.map(async (filename) => {
             filename = external_path_default().join(differencesDirectory, filename);
-            return external_fs_namespaceObject.promises
-                .open(filename, "r")
-                .then(async (file) => {
-                return file.readFile({
+            let handle;
+            try {
+                handle = await external_fs_namespaceObject.promises.open(filename, "r");
+                return handle
+                    .readFile({
                     encoding: "utf-8",
+                })
+                    .then(JSON.parse)
+                    .then((contentObject) => {
+                    const valueEither = pointDifferenceSchema.decode(contentObject);
+                    if ((0,Either.isRight)(valueEither)) {
+                        return valueEither.right;
+                    }
+                    else {
+                        throw valueEither.left;
+                    }
+                })
+                    .catch(async (problem) => {
+                    error(`${filename} was not in the right format! ${problem}`);
+                    await external_fs_namespaceObject.promises.unlink(filename);
+                    return undefined;
                 });
-            })
-                .then(JSON.parse)
-                .then((contentObject) => {
-                const valueEither = pointDifferenceSchema.decode(contentObject);
-                if ((0,Either.isRight)(valueEither)) {
-                    return valueEither.right;
+            }
+            catch {
+            }
+            finally {
+                if (handle) {
+                    await handle.close();
                 }
-                else {
-                    throw valueEither.left;
-                }
-            })
-                .catch(async (problem) => {
-                error(`${filename} was not in the right format! ${problem}`);
-                await external_fs_namespaceObject.promises.unlink(filename);
-                return undefined;
-            });
+            }
         }))
             .then(filterUndefined)
             .then((pointDifferences) => {
@@ -45781,9 +45790,10 @@ class GithubMediator {
             // Track usernames separately in case someone changed username halfway through
             const usernames = new Map();
             for (const difference of Object.values(pointDifferences)) {
-                const user = difference.user;
+                const data = difference;
+                const user = data.user;
                 pointDifferencesById.set(user.id, (pointDifferencesById.get(user.id) || 0) +
-                    difference.difference);
+                    data.difference);
                 usernames.set(user.id, user.login);
             }
             return new Map([...pointDifferencesById.entries()].map(([userId, pointDifference]) => {

@@ -28,7 +28,7 @@ const configurationSchema = t.intersection([
         reset_label: t.string,
     }),
 
-    t.interface({
+    t.type({
         points: t.record(t.string, t.number),
     }),
 ])

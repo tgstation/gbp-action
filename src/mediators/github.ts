@@ -18,7 +18,7 @@ import {
 } from "../points"
 import { Mediator, PullRequestId } from "./mediator"
 
-const pointDifferenceSchema = t.interface({
+const pointDifferenceSchema = t.type({
     user: t.strict({
         id: t.number,
         login: t.string,
@@ -26,6 +26,8 @@ const pointDifferenceSchema = t.interface({
 
     difference: t.number,
 })
+
+type PointDifference = t.TypeOf<typeof pointDifferenceSchema>
 
 const DIRECTORY = "point-differences"
 
@@ -83,61 +85,72 @@ export class GithubMediator implements Mediator {
 
     async getPointDifferences(): Promise<Map<GithubUser, number>> {
         const differencesDirectory = this.joinDirectory(DIRECTORY)
-        const filenames = await fs
+        const filenames: string[] = await fs
             .readdir(differencesDirectory)
             .catch(createCatchFileNotFound<string[]>([]))
 
         return Promise.all(
-            filenames.map(async (filename): Promise<any> => {
-                filename = path.join(differencesDirectory, filename)
+            filenames.map(
+                async (filename): Promise<PointDifference | undefined> => {
+                    filename = path.join(differencesDirectory, filename)
 
-                return fs
-                    .open(filename, "r")
-                    .then(async (file): Promise<string> => {
-                        return file.readFile({
-                            encoding: "utf-8",
-                        })
-                    })
-                    .then(JSON.parse)
-                    .then((contentObject) => {
-                        const valueEither =
-                            pointDifferenceSchema.decode(contentObject)
+                    let handle
+                    try {
+                        handle = await fs.open(filename, "r")
 
-                        if (isRight(valueEither)) {
-                            return valueEither.right
-                        } else {
-                            throw valueEither.left
+                        return handle
+                            .readFile({
+                                encoding: "utf-8",
+                            })
+                            .then(JSON.parse)
+                            .then((contentObject): PointDifference => {
+                                const valueEither =
+                                    pointDifferenceSchema.decode(contentObject)
+
+                                if (isRight(valueEither)) {
+                                    return valueEither.right
+                                } else {
+                                    throw valueEither.left
+                                }
+                            })
+                            .catch(async (problem) => {
+                                core.error(
+                                    `${filename} was not in the right format! ${problem}`,
+                                )
+                                await fs.unlink(filename)
+                                return undefined
+                            })
+                    } catch {
+                    } finally {
+                        if (handle) {
+                            await handle.close()
                         }
-                    })
-                    .catch(async (problem) => {
-                        core.error(
-                            `${filename} was not in the right format! ${problem}`,
-                        )
-                        await fs.unlink(filename)
-                        return undefined
-                    })
-            }),
+                    }
+                },
+            ),
         )
             .then(filterUndefined)
-            .then((pointDifferences) => {
+            .then((pointDifferences): Map<GithubUser, number> => {
                 const pointDifferencesById = new Map<number, number>()
 
                 // Track usernames separately in case someone changed username halfway through
                 const usernames = new Map<number, string>()
 
                 for (const difference of Object.values(pointDifferences)) {
-                    const user: GithubUser = difference.user
+                    const data: PointDifference = difference
+
+                    const user: GithubUser = data.user
 
                     pointDifferencesById.set(
                         user.id,
                         (pointDifferencesById.get(user.id) || 0) +
-                            difference.difference,
+                            data.difference,
                     )
 
                     usernames.set(user.id, user.login)
                 }
 
-                return new Map(
+                return new Map<GithubUser, number>(
                     [...pointDifferencesById.entries()].map(
                         ([userId, pointDifference]) => {
                             return [
