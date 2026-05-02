@@ -21,8 +21,6 @@ jobs:
                   npm ls
             - name: Run Test
               run: npm run test
-
-              #FIXME: This always produces diffs of little numbers, see https://github.com/vercel/ncc/issues/831#issuecomment-1594540905. Don't test until resolved
             - name: Validate dist
               run: |
                   cp dist/index.js index_pr.js
