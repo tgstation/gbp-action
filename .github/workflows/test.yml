@@ -17,6 +17,7 @@ jobs:
                   node-version: 25.9.0
             - name: Build Project
               run: |
+                  rm -rf node_modules
                   npm ci
                   npm ls
                   npm run build
