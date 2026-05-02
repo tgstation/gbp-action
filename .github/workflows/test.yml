@@ -17,16 +17,17 @@ jobs:
                   node-version: 25.9.0
             - name: Build Project
               run: |
-                  rm -rf node_modules
                   npm ci
                   npm ls
                   npm run build
-                  npm i -g @vercel/ncc
             - name: Validate dist
               run: |
                   cp dist/index.js index_pr.js
-                  rm -r dist
+                  rm -rf dist node_modules
+                  npm ci
+                  npm ls
                   npm run package
+                  npm i -g @vercel/ncc
                   diff dist/index.js index_pr.js
                   if [ $? -ne 0 ]; then
                       echo "Files differ!"
