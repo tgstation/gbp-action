@@ -15,20 +15,22 @@ jobs:
               uses: actions/setup-node@v6
               with:
                   node-version: 24.x
-            - name: Test Project
+            - name: Build Project
               run: |
                   npm ci
                   npm ls
-                  npm test
-              # FIXME: This always produces diffs of little numbers, and I have no idea why.
+                  npm run build
+                  npm i -g @vercel/ncc
+                  npm run package
             - name: Validate dist
               run: |
-                  npm i -g @vercel/ncc
-                  ncc build src/index.ts -o dist
-                  cp dist/index.js dist/index_pr.js
-                  ncc build src/index.ts -o dist
-                  diff dist/index.js dist/index_pr.js
+                  cp dist/index.js index_pr.js
+                  rm -r dist
+                  npm run package
+                  diff dist/index.js index_pr.js
                   if [ $? -ne 0 ]; then
-                    echo "Files differ!"
-                    exit 1
+                      echo "Files differ!"
+                      exit 1
                   fi
+            - name: Test Project
+              run: npm run test
