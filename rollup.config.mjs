@@ -5,7 +5,7 @@ export default {
   input: 'out/index.js',
   output: {
     file: 'dist/index.js',
-    format: 'cjs'
+    format: 'es'
   },
   plugins: [
     commonjs(),
