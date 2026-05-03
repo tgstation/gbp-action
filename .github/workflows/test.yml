@@ -31,5 +31,5 @@ jobs:
                   diff dist/index.js index_pr.js
                   if [ $? -ne 0 ]; then
                       echo "Files differ."
-                      exit 0
+                      exit 1
                   fi
