@@ -1,5 +1,6 @@
 import { GithubUser } from "./github"
 import * as points from "./points"
+import { EOL } from "os"
 
 describe("setBalance", () => {
     const user: GithubUser = {
@@ -182,7 +183,7 @@ describe("readBalanceFile", () => {
                     "24975989 = -1234 # Timberpoes",
                     "35135081 = -10 # Mothblocks",
                     "",
-                ].join("\n"),
+                ].join(EOL),
         )
     })
 })

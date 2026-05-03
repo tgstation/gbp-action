@@ -21,8 +21,6 @@ export default defineConfig([
     {
         ignores: [
             "**/*.mjs",
-            "**/*.test.ts",
-            "eslint.config.mjs",
             "**/*.js"
         ],
     },
@@ -43,12 +41,12 @@ export default defineConfig([
             },
 
             parser: tsParser,
-            ecmaVersion: 2015,
+            ecmaVersion: 2022,
             sourceType: "module",
 
             parserOptions: {
                 projectService: {
-                    allowDefaultProject: ["eslint.config.mjs", "configuration.test.ts", "points.test.ts"],
+                    allowDefaultProject: ["eslint.config.mjs", "src/configuration.test.ts", "src/points.test.ts"],
                     defaultProject: "tsconfig.json",
                 },
                 tsconfigRootDir: __dirname,
