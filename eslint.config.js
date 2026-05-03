@@ -24,9 +24,9 @@ export default defineConfig([
             "**/*.js"
         ],
     },
-    
+
     {
-      files: ["**/*.ts"],
+        files: ["**/*.ts"],
     },
 
     {
@@ -41,7 +41,7 @@ export default defineConfig([
             },
 
             parser: tsParser,
-            ecmaVersion: 2022,
+            ecmaVersion: 2025,
             sourceType: "module",
 
             parserOptions: {
