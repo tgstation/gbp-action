@@ -1,20 +1,20 @@
-import * as core from "@actions/core"
-import * as github from "@actions/github"
-import { Configuration } from "../configuration"
-import { GithubLabel, GithubPullRequest } from "../github"
-import { Mediator } from "../mediators/mediator"
-import * as points from "../points"
+import * as core from '@actions/core'
+import * as github from '@actions/github'
+import {Configuration} from '../configuration'
+import {GithubLabel, GithubPullRequest} from '../github'
+import {Mediator} from '../mediators/mediator'
+import * as points from '../points'
 
 export async function opened(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
-    basePath?: string,
+    basePath?: string
 ): Promise<void> {
-    const octokit = github.getOctokit(core.getInput("token"))
+    const octokit = github.getOctokit(core.getInput('token'))
 
     if (await mediator.isMaintainer(pullRequest.user)) {
-        core.info("Author is maintainer")
+        core.info('Author is maintainer')
         return
     }
 
@@ -25,7 +25,7 @@ export async function opened(
         0
 
     const labels: GithubLabel[] = pullRequest.labels
-    const labelNames = labels.map((label) => label.name)
+    const labelNames = labels.map(label => label.name)
 
     const pointsReceived = points.getPointsFromLabels(configuration, labelNames)
 
@@ -36,8 +36,8 @@ export async function opened(
             issue_number: pullRequest.number,
             body:
                 `You currently have a negative Fix/Feature pull request delta of ${userBalance}. ` +
-                "Maintainers may close this PR at will. Fixing issues or improving the codebase " +
-                "will improve this score.",
+                'Maintainers may close this PR at will. Fixing issues or improving the codebase ' +
+                'will improve this score.'
         })
     }
 }

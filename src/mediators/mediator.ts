@@ -1,4 +1,4 @@
-import { GithubUser } from "../github"
+import {GithubUser} from '../github'
 
 export type PullRequestId = number
 
@@ -12,12 +12,12 @@ export interface Mediator {
     newPointDifference(
         id: PullRequestId,
         user: GithubUser,
-        pointDifference: number,
+        pointDifference: number
     ): Promise<void>
 
     postComment(comment: string): Promise<void>
 
     writePointDifferences(
-        pointDifferences: Map<GithubUser, number>,
+        pointDifferences: Map<GithubUser, number>
     ): Promise<void>
 }

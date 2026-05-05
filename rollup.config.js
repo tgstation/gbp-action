@@ -1,12 +1,12 @@
-import commonjs from "@rollup/plugin-commonjs"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
+import commonjs from '@rollup/plugin-commonjs'
+import {nodeResolve} from '@rollup/plugin-node-resolve'
 
 export default {
-    input: "out/index.js",
+    input: 'out/index.js',
     output: {
-        file: "dist/index.js",
-        format: "es",
+        file: 'dist/index.js',
+        format: 'es'
     },
     context: 'globalThis',
-    plugins: [commonjs(), nodeResolve()],
+    plugins: [commonjs(), nodeResolve()]
 }

@@ -1,21 +1,21 @@
-import { GithubPullRequest } from "../github"
-import * as points from "../points"
-import { Configuration } from "../configuration"
-import { Mediator } from "../mediators/mediator"
+import {GithubPullRequest} from '../github'
+import * as points from '../points'
+import {Configuration} from '../configuration'
+import {Mediator} from '../mediators/mediator'
 
 export async function merged(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
-    basePath?: string,
+    basePath?: string
 ): Promise<void> {
     if (!pullRequest.merged) {
-        mediator.info("Pull request was closed, not merged.")
+        mediator.info('Pull request was closed, not merged.')
         return
     }
 
-    const { labels, user } = pullRequest
-    const labelNames = labels.map((label) => label.name)
+    const {labels, user} = pullRequest
+    const labelNames = labels.map(label => label.name)
 
     const balanceSheet = await points.readBalanceFile(basePath)
     const oldBalance =
@@ -42,7 +42,7 @@ export async function merged(
     mediator.newPointDifference(pullRequest.number, user, pointsReceived)
 
     if (await mediator.isMaintainer(pullRequest.user)) {
-        mediator.info("Author is maintainer")
+        mediator.info('Author is maintainer')
         return
     }
 
@@ -52,12 +52,12 @@ export async function merged(
     if (balance >= 0 && oldBalance < 0) {
         comment =
             `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
-            "Feel free to make Feature/Balance PRs."
+            'Feel free to make Feature/Balance PRs.'
     } else if (balance < 0 && pointsReceived < 0) {
         comment =
             `Your Fix/Feature pull request is currently below zero (${balance}). ` +
-            "Maintainers may close future Feature/Balance PRs. " +
-            "Fixing issues or helping to improve the codebase will raise this score."
+            'Maintainers may close future Feature/Balance PRs. ' +
+            'Fixing issues or helping to improve the codebase will raise this score.'
     }
 
     if (comment !== undefined) {

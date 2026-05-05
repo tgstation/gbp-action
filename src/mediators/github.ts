@@ -1,45 +1,45 @@
-import * as core from "@actions/core"
-import * as github from "@actions/github"
-import { getOctokit } from "@actions/github"
-import { exec } from "child_process"
-import { isRight } from "fp-ts/lib/Either"
-import { promises as fs } from "fs"
-import * as t from "io-ts"
-import path from "path"
-import toml from "toml"
-import { Configuration } from "../configuration"
-import { filterUndefined } from "../filterUndefined"
-import { GithubUser } from "../github"
+import * as core from '@actions/core'
+import * as github from '@actions/github'
+import {getOctokit} from '@actions/github'
+import {exec} from 'child_process'
+import {isRight} from 'fp-ts/lib/Either'
+import {promises as fs} from 'fs'
+import * as t from 'io-ts'
+import path from 'path'
+import toml from 'toml'
+import {Configuration} from '../configuration'
+import {filterUndefined} from '../filterUndefined'
+import {GithubUser} from '../github'
 import {
     readBalanceFile,
     readBalances,
     setBalance,
-    writeBalanceFile,
-} from "../points"
-import { Mediator, PullRequestId } from "./mediator"
+    writeBalanceFile
+} from '../points'
+import {Mediator, PullRequestId} from './mediator'
 
 const pointDifferenceSchema = t.type({
     user: t.strict({
         id: t.number,
-        login: t.string,
+        login: t.string
     }),
 
-    difference: t.number,
+    difference: t.number
 })
 
 type PointDifference = t.TypeOf<typeof pointDifferenceSchema>
 
-const DIRECTORY = "point-differences"
+const DIRECTORY = 'point-differences'
 
 const getFilenameForId = (id: PullRequestId): string =>
     `${DIRECTORY}/${id}.json`
 
 async function execShellCommand(
     command: string,
-    cwd?: string,
+    cwd?: string
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        exec(command, { cwd }, (error, stdout) => {
+        exec(command, {cwd}, (error, stdout) => {
             if (error) {
                 reject(error)
             } else {
@@ -50,8 +50,8 @@ async function execShellCommand(
 }
 
 const createCatchFileNotFound = <T>(value: T) => {
-    return async (error: { code: unknown }) => {
-        if (error.code !== "EEXIST" && error.code !== "ENOENT") {
+    return async (error: {code: unknown}) => {
+        if (error.code !== 'EEXIST' && error.code !== 'ENOENT') {
             return Promise.reject(error)
         } else {
             return Promise.resolve(value)
@@ -70,13 +70,13 @@ export class GithubMediator implements Mediator {
     constructor(
         configuration: Configuration,
         payload: typeof github.context.payload,
-        directory?: string,
+        directory?: string
     ) {
         this.configuration = configuration
         this.directory = directory
         this.payload = payload
 
-        this.octokit = github.getOctokit(core.getInput("token"))
+        this.octokit = github.getOctokit(core.getInput('token'))
     }
 
     async execShellCommand(command: string): Promise<string> {
@@ -96,11 +96,11 @@ export class GithubMediator implements Mediator {
 
                     let handle
                     try {
-                        handle = await fs.open(filename, "r")
+                        handle = await fs.open(filename, 'r')
 
                         return handle
                             .readFile({
-                                encoding: "utf-8",
+                                encoding: 'utf-8'
                             })
                             .then(JSON.parse)
                             .then((contentObject): PointDifference => {
@@ -113,9 +113,9 @@ export class GithubMediator implements Mediator {
                                     throw valueEither.left
                                 }
                             })
-                            .catch(async (problem) => {
+                            .catch(async problem => {
                                 core.error(
-                                    `${filename} was not in the right format! ${problem}`,
+                                    `${filename} was not in the right format! ${problem}`
                                 )
                                 await fs.unlink(filename)
                                 return undefined
@@ -126,8 +126,8 @@ export class GithubMediator implements Mediator {
                             await handle.close()
                         }
                     }
-                },
-            ),
+                }
+            )
         )
             .then(filterUndefined)
             .then((pointDifferences): Map<GithubUser, number> => {
@@ -144,7 +144,7 @@ export class GithubMediator implements Mediator {
                     pointDifferencesById.set(
                         user.id,
                         (pointDifferencesById.get(user.id) || 0) +
-                            data.difference,
+                            data.difference
                     )
 
                     usernames.set(user.id, user.login)
@@ -156,12 +156,12 @@ export class GithubMediator implements Mediator {
                             return [
                                 {
                                     id: userId,
-                                    login: usernames.get(userId) as string,
+                                    login: usernames.get(userId) as string
                                 },
-                                pointDifference,
+                                pointDifference
                             ]
-                        },
-                    ),
+                        }
+                    )
                 )
             })
     }
@@ -177,13 +177,13 @@ export class GithubMediator implements Mediator {
 
         if (
             maintainerTeamSlug === undefined ||
-            payload.pull_request?.base.repo.owner.type !== "Organization"
+            payload.pull_request?.base.repo.owner.type !== 'Organization'
         ) {
             const collaborator = await octokit.rest.repos
                 .getCollaboratorPermissionLevel({
                     owner: payload.repository?.owner?.login as string,
                     repo: payload.repository?.name as string,
-                    username: user.login,
+                    username: user.login
                 })
                 .catch(() => {
                     return undefined
@@ -194,13 +194,13 @@ export class GithubMediator implements Mediator {
             }
 
             const permission = collaborator.data.permission
-            return permission === "admin" || permission === "write"
+            return permission === 'admin' || permission === 'write'
         } else {
             const membership = await octokit.rest.teams
                 .getMembershipForUserInOrg({
                     org: payload.repository?.owner?.login as string,
                     team_slug: maintainerTeamSlug,
-                    username: user.login,
+                    username: user.login
                 })
                 .catch(() => {
                     return undefined
@@ -210,14 +210,14 @@ export class GithubMediator implements Mediator {
                 return false
             }
 
-            return membership.data.state === "active"
+            return membership.data.state === 'active'
         }
     }
 
     async newPointDifference(
         id: PullRequestId,
         user: GithubUser,
-        pointDifference: number,
+        pointDifference: number
     ): Promise<void> {
         const pointDifferenceData: t.TypeOf<typeof pointDifferenceSchema> = {
             difference: pointDifference,
@@ -225,23 +225,23 @@ export class GithubMediator implements Mediator {
             // Don't just pass in `user`, since there's a lot more than just these two fields
             user: {
                 id: user.id,
-                login: user.login,
-            },
+                login: user.login
+            }
         }
 
         await fs.mkdir(this.joinDirectory(DIRECTORY)).catch(catchFileNotFound)
 
         this.octokit.rest.repos.createOrUpdateFileContents({
-            branch: core.getInput("branch", {
-                required: false,
+            branch: core.getInput('branch', {
+                required: false
             }),
             content: Buffer.from(JSON.stringify(pointDifferenceData)).toString(
-                "base64",
+                'base64'
             ),
             owner: github.context.payload.repository?.owner?.login as string,
             repo: github.context.payload.repository?.name as string,
             message: `Updating GBP balances for #${id}`,
-            path: getFilenameForId(id),
+            path: getFilenameForId(id)
         })
     }
 
@@ -250,15 +250,15 @@ export class GithubMediator implements Mediator {
             owner: github.context.payload.repository?.owner?.login as string,
             repo: github.context.payload.repository?.name as string,
             issue_number: this.payload.pull_request?.number as number,
-            body: comment,
+            body: comment
         })
     }
 
     async writePointDifferences(
-        pointDifferences: Map<GithubUser, number>,
+        pointDifferences: Map<GithubUser, number>
     ): Promise<void> {
         if (pointDifferences.size === 0) {
-            core.info("No point differences.")
+            core.info('No point differences.')
             return
         }
 
@@ -269,7 +269,7 @@ export class GithubMediator implements Mediator {
             balanceSheet = setBalance(
                 balanceSheet,
                 user,
-                (balances[user.id] || 0) + points,
+                (balances[user.id] || 0) + points
             )
         }
 
@@ -281,7 +281,7 @@ export class GithubMediator implements Mediator {
             toml.parse(balanceSheet)
         } catch (exception) {
             return Promise.reject(
-                `setBalance resulted in invalid output\n${exception}\nBalance sheet:\n${balanceSheet}`,
+                `setBalance resulted in invalid output\n${exception}\nBalance sheet:\n${balanceSheet}`
             )
         }
 
@@ -294,19 +294,19 @@ export class GithubMediator implements Mediator {
                         filenames.map(
                             async (filename): Promise<void> =>
                                 fs.unlink(
-                                    this.joinDirectory(DIRECTORY, filename),
-                                ),
-                        ),
+                                    this.joinDirectory(DIRECTORY, filename)
+                                )
+                        )
                     )
                 })
-                .catch(catchFileNotFound),
+                .catch(catchFileNotFound)
         ])
 
-        await this.execShellCommand("git add .")
+        await this.execShellCommand('git add .')
         await this.execShellCommand(
-            `git commit -m "Updating ${pointDifferences.size} GBP score(s)"`,
+            `git commit -m "Updating ${pointDifferences.size} GBP score(s)"`
         )
-        await this.execShellCommand("git push origin HEAD")
+        await this.execShellCommand('git push origin HEAD')
     }
 
     joinDirectory(...paths: string[]): string {

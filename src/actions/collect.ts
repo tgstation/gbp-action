@@ -1,4 +1,4 @@
-import { Mediator } from "../mediators/mediator"
+import {Mediator} from '../mediators/mediator'
 
 export async function collect(mediator: Mediator): Promise<void> {
     const pointDifferences = await mediator.getPointDifferences()
