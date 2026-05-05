@@ -24,7 +24,7 @@ export default defineConfig([
         '**/jest.config.js'
     ]),
     {
-        ignores: ['**/*.mjs', '**/*.js']
+        ignores: ['**/*.js']
     },
 
     {
@@ -49,7 +49,7 @@ export default defineConfig([
             parserOptions: {
                 projectService: {
                     allowDefaultProject: [
-                        'eslint.config.mjs',
+                        'eslint.config.js',
                         'src/configuration.test.ts',
                         'src/points.test.ts'
                     ],
