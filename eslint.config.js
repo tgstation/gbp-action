@@ -1,28 +1,30 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import globals from "globals";
-import tsParser from "@typescript-eslint/parser";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
-import stylistic from '@stylistic/eslint-plugin'
+import { defineConfig, globalIgnores } from "eslint/config"
+import typescriptEslint from "@typescript-eslint/eslint-plugin"
+import globals from "globals"
+import tsParser from "@typescript-eslint/parser"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import js from "@eslint/js"
+import { FlatCompat } from "@eslint/eslintrc"
+import stylistic from "@stylistic/eslint-plugin"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const compat = new FlatCompat({
     baseDirectory: __dirname,
     recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
+    allConfig: js.configs.all,
+})
 
 export default defineConfig([
-    globalIgnores(["**/dist/", "**/lib/", "**/node_modules/", "**/jest.config.js"]),
+    globalIgnores([
+        "**/dist/",
+        "**/lib/",
+        "**/node_modules/",
+        "**/jest.config.js",
+    ]),
     {
-        ignores: [
-            "**/*.mjs",
-            "**/*.js"
-        ],
+        ignores: ["**/*.mjs", "**/*.js"],
     },
 
     {
@@ -32,7 +34,7 @@ export default defineConfig([
     {
         plugins: {
             "@typescript-eslint": typescriptEslint,
-            '@stylistic': stylistic
+            "@stylistic": stylistic,
         },
 
         languageOptions: {
@@ -46,7 +48,11 @@ export default defineConfig([
 
             parserOptions: {
                 projectService: {
-                    allowDefaultProject: ["eslint.config.mjs", "src/configuration.test.ts", "src/points.test.ts"],
+                    allowDefaultProject: [
+                        "eslint.config.mjs",
+                        "src/configuration.test.ts",
+                        "src/points.test.ts",
+                    ],
                     defaultProject: "tsconfig.json",
                 },
                 tsconfigRootDir: __dirname,
@@ -60,9 +66,12 @@ export default defineConfig([
             "no-unused-vars": "off",
             "@typescript-eslint/no-unused-vars": "error",
 
-            "@typescript-eslint/explicit-member-accessibility": ["error", {
-                accessibility: "no-public",
-            }],
+            "@typescript-eslint/explicit-member-accessibility": [
+                "error",
+                {
+                    accessibility: "no-public",
+                },
+            ],
 
             "@typescript-eslint/no-require-imports": "error",
             "@typescript-eslint/array-type": "error",
@@ -71,9 +80,12 @@ export default defineConfig([
             camelcase: "off",
             "@typescript-eslint/consistent-type-assertions": "error",
 
-            "@typescript-eslint/explicit-function-return-type": ["error", {
-                allowExpressions: true,
-            }],
+            "@typescript-eslint/explicit-function-return-type": [
+                "error",
+                {
+                    allowExpressions: true,
+                },
+            ],
 
             "@stylistic/function-call-spacing": ["error", "never"],
             "@typescript-eslint/no-array-constructor": "error",
@@ -102,4 +114,4 @@ export default defineConfig([
             "@typescript-eslint/unbound-method": "error",
         },
     },
-]);
+])

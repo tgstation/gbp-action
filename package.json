@@ -5,11 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "format": "prettier --write **/*.ts",
-    "format-check": "prettier --check **/*.ts",
+    "format": "prettier --write **/*.{js,ts}",
+    "format-check": "prettier --check **/*.{js,ts}",
     "lint": "eslint",
     "build": "tsc",
-    "package": "rollup -c --sourcemap",
+    "package": "rollup -c",
     "test": "jest",
     "all": "npm run format && npm run format-check && npm run lint && npm run build && npm run package & npm run test"
   },
