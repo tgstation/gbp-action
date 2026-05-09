@@ -18,7 +18,6 @@ jobs:
             - name: Checkout alternate branch
               uses: actions/checkout@v6
               with:
-                  repository: "tgstation/tgstation"
                   ref: "gbp-balances" # The branch name
                   path: gbp-balances
             # This is to ensure we keep the gbp.toml from master
