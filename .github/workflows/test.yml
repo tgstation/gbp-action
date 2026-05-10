@@ -24,8 +24,8 @@ jobs:
             - name: Validate dist
               run: |
                   npm i -g rollup
-                  cp dist/index.js dist/index_pr.js
+                  cp dist/index.js index_pr.js
                   rm -rf out dist
                   npm run build
                   npm run package
-                  diff dist/index.js dist/index_pr.js
+                  diff dist/index.js index_pr.js
