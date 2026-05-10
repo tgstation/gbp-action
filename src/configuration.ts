@@ -1,4 +1,4 @@
-import {promises as fs} from 'fs'
+import {readFile} from './actions/read'
 import {isRight} from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
 import * as toml from 'toml'
@@ -53,12 +53,9 @@ export function parseConfig(configurationText: string): Configuration {
 export async function readConfiguration(
     basePath?: string
 ): Promise<Configuration> {
-    const configFile = await fs.readFile(
-        basePath ? path.join(basePath, CONFIG_FILE) : CONFIG_FILE,
-        {
-            encoding: 'utf-8'
-        }
-    )
+    const filePath = basePath ? path.join(basePath, CONFIG_FILE) : CONFIG_FILE
 
-    return parseConfig(configFile)
+    const configText = await readFile(filePath)
+
+    return Promise.resolve(parseConfig(configText))
 }

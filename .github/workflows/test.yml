@@ -21,3 +21,11 @@ jobs:
                   npm ls
             - name: Run Test
               run: npm run test
+            - name: Validate dist
+              run: |
+                  npm i -g rollup
+                  cp dist/index.js dist/index_pr.js
+                  rm -rf out dist
+                  npm run build
+                  npm run package
+                  diff dist/index.js dist/index_pr.js
