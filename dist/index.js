@@ -35821,24 +35821,6 @@ function requireEither () {
 
 var EitherExports = /*@__PURE__*/ requireEither();
 
-async function readFile(basePath) {
-    let handle = null;
-    try {
-        handle = await promises.open(basePath, 'r');
-        return Promise.resolve(await handle.readFile({
-            encoding: 'utf-8'
-        }));
-    }
-    catch (e) {
-        return Promise.reject(`Error reading file: ${e}`);
-    }
-    finally {
-        if (handle) {
-            await handle.close();
-        }
-    }
-}
-
 (globalThis && globalThis.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -41929,7 +41911,9 @@ function getBalancePath(basePath) {
     return basePath ? path.join(basePath, BALANCES_FILE) : BALANCES_FILE;
 }
 async function readBalanceFile(basePath) {
-    return readFile(getBalancePath(basePath));
+    return readFileSync(getBalancePath(basePath), {
+        encoding: 'utf-8'
+    });
 }
 function readBalances(text) {
     const balancesEither = validateBalances.decode(tomlExports.parse(text));
@@ -42072,7 +42056,7 @@ function parseConfig(configurationText) {
 }
 async function readConfiguration(basePath) {
     const filePath = basePath ? path.join(basePath, CONFIG_FILE) : CONFIG_FILE;
-    const configText = await readFile(filePath);
+    const configText = readFileSync(filePath, { encoding: 'utf-8' });
     return Promise.resolve(parseConfig(configText));
 }
 

@@ -1,9 +1,8 @@
 import {Configuration} from './configuration'
 import {GithubUser} from './github'
-import {promises as fs} from 'fs'
+import {promises as fs, readFileSync} from 'fs'
 import {isRight} from 'fp-ts/lib/Either'
 import {EOL} from 'os'
-import {readFile} from './actions/read'
 import * as t from 'io-ts'
 import * as toml from 'toml'
 import path from 'path'
@@ -83,7 +82,9 @@ function getBalancePath(basePath?: string): string {
 }
 
 export async function readBalanceFile(basePath?: string): Promise<string> {
-    return readFile(getBalancePath(basePath))
+    return readFileSync(getBalancePath(basePath), {
+        encoding: 'utf-8'
+    })
 }
 
 export function readBalances(text: string): t.TypeOf<typeof validateBalances> {

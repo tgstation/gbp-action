@@ -1,8 +1,8 @@
-import {readFile} from './actions/read'
 import {isRight} from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
 import * as toml from 'toml'
 import path from 'path'
+import {readFileSync} from 'fs'
 
 const CONFIG_FILE = './.github/gbp.toml'
 
@@ -55,7 +55,7 @@ export async function readConfiguration(
 ): Promise<Configuration> {
     const filePath = basePath ? path.join(basePath, CONFIG_FILE) : CONFIG_FILE
 
-    const configText = await readFile(filePath)
+    const configText = readFileSync(filePath, {encoding: 'utf-8'})
 
     return Promise.resolve(parseConfig(configText))
 }
