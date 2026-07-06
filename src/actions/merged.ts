@@ -19,20 +19,24 @@ export async function merged(
     const labelNames = labels.map(label => label.name)
 
     const balanceSheet = await points.readBalanceFile(basePath)
+    const balances = balanceSheet
+        ? points.readBalances(balanceSheet)
+        : undefined
+
     const labelPoints = points.getPointsFromLabels(configuration, labelNames)
+    const reset =
+        configuration.reset_label !== undefined &&
+        labelNames.includes(configuration.reset_label)
+
     let comment
 
     for (const user of mentioned) {
-        const oldBalance =
-            (balanceSheet && points.readBalances(balanceSheet)[user.id]) || 0
+        const oldBalance = (balances && balances[user.id]) || 0
 
         let balance
         let pointsReceived = 0
 
-        if (
-            configuration.reset_label !== undefined &&
-            labelNames.includes(configuration.reset_label)
-        ) {
+        if (reset) {
             // Force pointsReceived up enough to make balance default
             pointsReceived = -oldBalance
         } else {
