@@ -9,6 +9,8 @@ export interface Mediator {
 
     isMaintainer(user: GithubUser): Promise<boolean>
 
+    getUserByName(name: string): Promise<GithubUser | undefined>
+
     newPointDifference(
         id: PullRequestId,
         user: GithubUser,

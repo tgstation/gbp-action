@@ -13,5 +13,6 @@ export type GithubPullRequest = {
     labels: GithubLabel[]
     merged: boolean
     number: number
+    body: string
     user: GithubUser
 }
