@@ -42139,6 +42139,7 @@ async function merged(configuration, mediator, pullRequest, mentioned, basePath)
     const { labels } = pullRequest;
     const labelNames = labels.map(label => label.name);
     const balanceSheet = await readBalanceFile(basePath);
+    const labelPoints = getPointsFromLabels(configuration, labelNames);
     let comment;
     for (const user of mentioned) {
         const oldBalance = (balanceSheet && readBalances(balanceSheet)[user.id]) || 0;
@@ -42150,10 +42151,10 @@ async function merged(configuration, mediator, pullRequest, mentioned, basePath)
             pointsReceived = -oldBalance;
         }
         else {
-            pointsReceived = getPointsFromLabels(configuration, labelNames);
+            pointsReceived = labelPoints;
         }
         if (pointsReceived === 0) {
-            return;
+            continue;
         }
         balance = oldBalance + pointsReceived;
         mediator.newPointDifference(pullRequest.number, user, pointsReceived);
