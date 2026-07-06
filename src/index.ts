@@ -71,7 +71,16 @@ async function run(): Promise<void> {
                                 await mediator.getUserByName(contributor)
                             if (user) {
                                 if (user.id != pullRequest.user.id) {
-                                    mentioned.push(user)
+                                    let pushed = false
+                                    for (const e of mentioned) {
+                                        if (e.id == user.id) {
+                                            pushed = true
+                                            break
+                                        }
+                                    }
+                                    if (!pushed) {
+                                        mentioned.push(user)
+                                    }
                                 } else {
                                     mediator.info(
                                         'Author should not mentioned again in the changelog'
