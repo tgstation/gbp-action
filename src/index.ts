@@ -48,7 +48,7 @@ async function run(): Promise<void> {
             const mentioned: GithubUser[] = [pullRequest.user]
 
             //find all names between :cl: and the new line to give credit for
-            let cl_index = pullRequest.body.lastIndexOf(':cl:')
+            let cl_index = pullRequest.body.indexOf(':cl:')
             if (cl_index != -1) {
                 cl_index += 4
                 const nl_index = pullRequest.body.indexOf(EOL, cl_index)
@@ -70,21 +70,15 @@ async function run(): Promise<void> {
                             const user: GithubUser | undefined =
                                 await mediator.getUserByName(contributor)
                             if (user) {
-                                if (user.id != pullRequest.user.id) {
-                                    let pushed = false
-                                    for (const e of mentioned) {
-                                        if (e.id == user.id) {
-                                            pushed = true
-                                            break
-                                        }
+                                let pushed = false
+                                for (const e of mentioned) {
+                                    if (e.id == user.id) {
+                                        pushed = true
+                                        break
                                     }
-                                    if (!pushed) {
-                                        mentioned.push(user)
-                                    }
-                                } else {
-                                    mediator.info(
-                                        'Author should not mentioned again in the changelog'
-                                    )
+                                }
+                                if (!pushed) {
+                                    mentioned.push(user)
                                 }
                             } else {
                                 mediator.info(`${contributor} does not exist`)
