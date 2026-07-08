@@ -174,6 +174,7 @@ export class GithubMediator implements Mediator {
         const maintainerTeamSlug = this.configuration.maintainer_team_slug
         const payload = this.payload
         const octokit = this.octokit
+
         if (
             maintainerTeamSlug === undefined ||
             payload.pull_request?.base.repo.owner.type !== 'Organization'
@@ -210,27 +211,6 @@ export class GithubMediator implements Mediator {
             }
 
             return membership.data.state === 'active'
-        }
-    }
-
-    async getUserByName(name: string): Promise<GithubUser | undefined> {
-        const octokit = this.octokit
-
-        const response = await octokit.rest.users
-            .getByUsername({
-                username: name
-            })
-            .catch(() => {
-                return undefined
-            })
-
-        if (response) {
-            const data = response.data
-
-            return Promise.resolve({
-                id: data.id,
-                login: data.login
-            })
         }
     }
 

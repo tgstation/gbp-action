@@ -42131,55 +42131,46 @@ async function writeBalanceFile(contents, basePath) {
     });
 }
 
-async function merged(configuration, mediator, pullRequest, mentioned, basePath) {
+async function merged(configuration, mediator, pullRequest, basePath) {
     if (!pullRequest.merged) {
         mediator.info('Pull request was closed, not merged.');
         return;
     }
-    const { labels } = pullRequest;
+    const { labels, user } = pullRequest;
     const labelNames = labels.map(label => label.name);
     const balanceSheet = await readBalanceFile(basePath);
-    const balances = balanceSheet
-        ? readBalances(balanceSheet)
-        : undefined;
-    const labelPoints = getPointsFromLabels(configuration, labelNames);
-    const reset = configuration.reset_label !== undefined &&
-        labelNames.includes(configuration.reset_label);
+    const oldBalance = (balanceSheet && readBalances(balanceSheet)[user.id]) || 0;
+    let balance;
+    let pointsReceived = 0;
+    if (configuration.reset_label !== undefined &&
+        labelNames.includes(configuration.reset_label)) {
+        // Force pointsReceived up enough to make balance default
+        pointsReceived = -oldBalance;
+    }
+    else {
+        pointsReceived = getPointsFromLabels(configuration, labelNames);
+    }
+    if (pointsReceived === 0) {
+        return;
+    }
+    balance = oldBalance + pointsReceived;
+    mediator.newPointDifference(pullRequest.number, user, pointsReceived);
+    if (await mediator.isMaintainer(pullRequest.user)) {
+        mediator.info('Author is maintainer');
+        return;
+    }
+    // Only send comment after its ensured the GBP is saved
     let comment;
-    for (const user of mentioned) {
-        const oldBalance = (balances && balances[user.id]) || 0;
-        let balance;
-        let pointsReceived = 0;
-        if (reset) {
-            // Force pointsReceived up enough to make balance default
-            pointsReceived = -oldBalance;
-        }
-        else {
-            pointsReceived = labelPoints;
-        }
-        if (pointsReceived === 0) {
-            continue;
-        }
-        balance = oldBalance + pointsReceived;
-        mediator.newPointDifference(pullRequest.number, user, pointsReceived);
-        if (await mediator.isMaintainer(user)) {
-            mediator.info('Author is maintainer');
-            continue;
-        }
-        // Only send comment after its ensured the GBP is saved
-        if (user.id == pullRequest.user.id) {
-            if (balance >= 0 && oldBalance < 0) {
-                comment =
-                    `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
-                        'Feel free to make Feature/Balance PRs.';
-            }
-            else if (balance < 0 && pointsReceived < 0) {
-                comment =
-                    `Your Fix/Feature pull request is currently below zero (${balance}). ` +
-                        'Maintainers may close future Feature/Balance PRs. ' +
-                        'Fixing issues or helping to improve the codebase will raise this score.';
-            }
-        }
+    if (balance >= 0 && oldBalance < 0) {
+        comment =
+            `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
+                'Feel free to make Feature/Balance PRs.';
+    }
+    else if (balance < 0 && pointsReceived < 0) {
+        comment =
+            `Your Fix/Feature pull request is currently below zero (${balance}). ` +
+                'Maintainers may close future Feature/Balance PRs. ' +
+                'Fixing issues or helping to improve the codebase will raise this score.';
     }
     if (comment !== undefined) {
         await mediator.postComment(comment);
@@ -42397,23 +42388,6 @@ class GithubMediator {
             return membership.data.state === 'active';
         }
     }
-    async getUserByName(name) {
-        const octokit = this.octokit;
-        const response = await octokit.rest.users
-            .getByUsername({
-            username: name
-        })
-            .catch(() => {
-            return undefined;
-        });
-        if (response) {
-            const data = response.data;
-            return Promise.resolve({
-                id: data.id,
-                login: data.login
-            });
-        }
-    }
     async newPointDifference(id, user, pointDifference) {
         const pointDifferenceData = {
             difference: pointDifference,
@@ -42503,49 +42477,7 @@ async function run() {
         case 'opened':
             return opened(configuration, mediator, pullRequest, directory);
         case 'closed':
-            const mentioned = [pullRequest.user];
-            //find all names between :cl: and the new line to give credit for
-            let cl_index = pullRequest.body.indexOf(':cl:');
-            if (cl_index != -1) {
-                cl_index += 4;
-                const nl_index = pullRequest.body.indexOf(EOL, cl_index);
-                if (nl_index != -1) {
-                    let contributor = '';
-                    for (let i = cl_index; i < nl_index; i++) {
-                        const char = pullRequest.body.charAt(i);
-                        if (char == ',' ||
-                            char == ' ') //delimiters the pr author can use to seperate names by
-                         {
-                            contributor = contributor.trim();
-                            if (contributor.length == 0) {
-                                contributor = '';
-                                continue;
-                            }
-                            const user = await mediator.getUserByName(contributor);
-                            if (user) {
-                                let pushed = false;
-                                for (const e of mentioned) {
-                                    if (e.id == user.id) {
-                                        pushed = true;
-                                        break;
-                                    }
-                                }
-                                if (!pushed) {
-                                    mentioned.push(user);
-                                }
-                            }
-                            else {
-                                mediator.info(`${contributor} does not exist`);
-                            }
-                            contributor = '';
-                        }
-                        else {
-                            contributor += char;
-                        }
-                    }
-                }
-            }
-            return merged(configuration, mediator, pullRequest, mentioned, directory);
+            return merged(configuration, mediator, pullRequest, directory);
         default:
             info(`Unknown action: ${context.payload.action}`);
     }
