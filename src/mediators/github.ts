@@ -291,11 +291,8 @@ export class GithubMediator implements Mediator {
                 .readdir(this.joinDirectory(DIRECTORY))
                 .then(async (filenames): Promise<void[]> => {
                     return Promise.all(
-                        filenames.map(
-                            async (filename): Promise<void> =>
-                                fs.unlink(
-                                    this.joinDirectory(DIRECTORY, filename)
-                                )
+                        filenames.map(async (filename): Promise<void> =>
+                            fs.unlink(this.joinDirectory(DIRECTORY, filename))
                         )
                     )
                 })
