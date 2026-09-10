@@ -27,25 +27,25 @@
     "@actions/github": "^9.1.1",
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
-    "toml": "^4.1.2"
+    "toml": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-typescript": "^8.0.1",
-    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^10.0.1",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^26.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.62.1",
-    "@typescript-eslint/parser": "^8.62.1",
-    "eslint": "^10.6.0",
-    "globals": "^17.7.0",
-    "jest": "^30.4.2",
-    "prettier": "^3.9.4",
+    "@types/node": "^26.4.1",
+    "@typescript-eslint/eslint-plugin": "^8.69.0",
+    "@typescript-eslint/parser": "^8.69.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "jest": "^30.5.1",
+    "prettier": "^3.9.6",
     "typescript": "^6.0.3"
   }
 }
