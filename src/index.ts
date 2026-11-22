@@ -46,9 +46,21 @@ async function run(): Promise<void> {
 
     switch (github.context.payload.action) {
         case 'opened':
-            return opened(configuration, mediator, pullRequest, directory, comment)
+            return opened(
+                configuration,
+                mediator,
+                pullRequest,
+                directory,
+                comment
+            )
         case 'closed':
-            return merged(configuration, mediator, pullRequest, directory, comment)
+            return merged(
+                configuration,
+                mediator,
+                pullRequest,
+                directory,
+                comment
+            )
         default:
             core.info(`Unknown action: ${github.context.payload.action}`)
     }
