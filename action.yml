@@ -1,5 +1,5 @@
-name: "GBP"
-description: "Reward or take away points to contributors based on PR labels."
+name: 'GBP'
+description: 'Reward or take away points to contributors based on PR labels.'
 inputs:
     branch:
         description: |
@@ -10,11 +10,15 @@ inputs:
         description: 'Set to "true" if this run should collect the GBP together. This must be on a cron job.'
         required: false
     directory:
-        description: "The directory the action will run from"
+        description: 'The directory the action will run from'
         required: false
     token:
-        description: "Token to authorize commits and comments under"
+        description: 'Token to authorize commits and comments under'
         required: true
+    comment:
+        description: 'Whether to comment on open/merge regarding negative balances'
+        required: false
+        type: boolean
 runs:
-    using: "node24"
-    main: "dist/index.js"
+    using: 'node24'
+    main: 'dist/index.js'

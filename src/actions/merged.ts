@@ -7,7 +7,8 @@ export async function merged(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
-    basePath?: string
+    basePath?: string,
+    allowComment?: boolean
 ): Promise<void> {
     if (!pullRequest.merged) {
         mediator.info('Pull request was closed, not merged.')
@@ -46,9 +47,13 @@ export async function merged(
         return
     }
 
+    if (allowComment != undefined && !allowComment) {
+        return // Nothing else to do
+    }
+
     // Only send comment after its ensured the GBP is saved
     let comment
-
+    
     if (balance >= 0 && oldBalance < 0) {
         comment =
             `Your Fix/Feature pull request delta is now above zero (${balance}). ` +
