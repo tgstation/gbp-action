@@ -19,6 +19,7 @@ inputs:
         description: 'Whether to comment on open/merge regarding negative balances'
         required: false
         type: boolean
+        default: 'true'
 runs:
     using: 'node24'
     main: 'dist/index.js'
