@@ -34,7 +34,7 @@ async function run(): Promise<void> {
         return collect(mediator)
     }
 
-    const comment = core.getInput('comment', {
+    const comment = core.getBooleanInput('comment', {
         required: false
     })
 
