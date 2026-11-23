@@ -7,7 +7,8 @@ export async function merged(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
-    basePath?: string
+    basePath?: string,
+    allowComment?: boolean
 ): Promise<void> {
     if (!pullRequest.merged) {
         mediator.info('Pull request was closed, not merged.')
@@ -44,6 +45,10 @@ export async function merged(
     if (await mediator.isMaintainer(pullRequest.user)) {
         mediator.info('Author is maintainer')
         return
+    }
+
+    if (allowComment != undefined && !allowComment) {
+        return // Nothing else to do
     }
 
     // Only send comment after its ensured the GBP is saved

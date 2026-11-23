@@ -34,6 +34,10 @@ async function run(): Promise<void> {
         return collect(mediator)
     }
 
+    const comment = core.getBooleanInput('comment', {
+        required: false
+    })
+
     const pullRequest = github.context.payload.pull_request as GithubPullRequest
 
     if (pullRequest === undefined) {
@@ -42,9 +46,21 @@ async function run(): Promise<void> {
 
     switch (github.context.payload.action) {
         case 'opened':
-            return opened(configuration, mediator, pullRequest, directory)
+            return opened(
+                configuration,
+                mediator,
+                pullRequest,
+                directory,
+                comment
+            )
         case 'closed':
-            return merged(configuration, mediator, pullRequest, directory)
+            return merged(
+                configuration,
+                mediator,
+                pullRequest,
+                directory,
+                comment
+            )
         default:
             core.info(`Unknown action: ${github.context.payload.action}`)
     }

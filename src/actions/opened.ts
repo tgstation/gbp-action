@@ -9,8 +9,13 @@ export async function opened(
     configuration: Configuration,
     mediator: Mediator,
     pullRequest: GithubPullRequest,
-    basePath?: string
+    basePath?: string,
+    allowComment?: boolean
 ): Promise<void> {
+    if (allowComment != undefined && !allowComment) {
+        return // Nothing to do currently
+    }
+
     const octokit = github.getOctokit(core.getInput('token'))
 
     if (await mediator.isMaintainer(pullRequest.user)) {

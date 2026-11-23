@@ -28485,6 +28485,27 @@ function getInput(name, options) {
     }
     return val.trim();
 }
+/**
+ * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
+ * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
+ * The return value is also in boolean type.
+ * ref: https://yaml.org/spec/1.2/spec.html#id2804923
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   boolean
+ */
+function getBooleanInput(name, options) {
+    const trueValue = ['true', 'True', 'TRUE'];
+    const falseValue = ['false', 'False', 'FALSE'];
+    const val = getInput(name, options);
+    if (trueValue.includes(val))
+        return true;
+    if (falseValue.includes(val))
+        return false;
+    throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
+        `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
+}
 //-----------------------------------------------------------------------
 // Results
 //-----------------------------------------------------------------------
@@ -42840,7 +42861,7 @@ async function writeBalanceFile(contents, basePath) {
     });
 }
 
-async function merged(configuration, mediator, pullRequest, basePath) {
+async function merged(configuration, mediator, pullRequest, basePath, allowComment) {
     if (!pullRequest.merged) {
         mediator.info('Pull request was closed, not merged.');
         return;
@@ -42868,6 +42889,9 @@ async function merged(configuration, mediator, pullRequest, basePath) {
         mediator.info('Author is maintainer');
         return;
     }
+    if (allowComment != undefined && !allowComment) {
+        return; // Nothing else to do
+    }
     // Only send comment after its ensured the GBP is saved
     let comment;
     if (balance >= 0 && oldBalance < 0) {
@@ -42886,7 +42910,10 @@ async function merged(configuration, mediator, pullRequest, basePath) {
     }
 }
 
-async function opened(configuration, mediator, pullRequest, basePath) {
+async function opened(configuration, mediator, pullRequest, basePath, allowComment) {
+    if (allowComment != undefined && !allowComment) {
+        return; // Nothing to do currently
+    }
     const octokit = getOctokit(getInput('token'));
     if (await mediator.isMaintainer(pullRequest.user)) {
         info('Author is maintainer');
@@ -43178,15 +43205,18 @@ async function run() {
     }) === 'true') {
         return collect(mediator);
     }
+    const comment = getBooleanInput('comment', {
+        required: false
+    });
     const pullRequest = context.payload.pull_request;
     if (pullRequest === undefined) {
         return Promise.reject('No pull request detected.');
     }
     switch (context.payload.action) {
         case 'opened':
-            return opened(configuration, mediator, pullRequest, directory);
+            return opened(configuration, mediator, pullRequest, directory, comment);
         case 'closed':
-            return merged(configuration, mediator, pullRequest, directory);
+            return merged(configuration, mediator, pullRequest, directory, comment);
         default:
             info(`Unknown action: ${context.payload.action}`);
     }
